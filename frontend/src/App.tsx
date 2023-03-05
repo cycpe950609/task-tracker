@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import LoginPage from "./pages/login/login";
@@ -8,14 +8,15 @@ import {
 } from "./utils/github";
 
 function App() {
+
     const [githubClient, setGithubClient] = useState(
         defaultGitHubClientContext
     );
-    const updateGithubClient = (authKey: string) => {
+    const updateGithubClient = useCallback((authKey: string) => {
         setGithubClient({
             authKey: authKey
         });
-    };
+    },[setGithubClient]);
     return (
         <>
             <GitHubClientContext.Provider value={githubClient}>

@@ -14,7 +14,8 @@ function LoginPage(props: LoginPagePropsType) {
         if (authCode === null)
             throw new Error("Something Error when getting authorication");
 
-        // getAuthToken(authCode).then((rtv: AuthTokenType) => {
+        getAuthToken(authCode)
+        // .then((rtv: AuthTokenType) => {
         //     console.log(rtv);
         //     props.updateGithubAuth(rtv.access_token);
         // });

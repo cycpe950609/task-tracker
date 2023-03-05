@@ -16,19 +16,13 @@ export type AuthTokenType = {
     scope: string;
     token_type: string;
 };
-export function getAuthToken(code: string) {
-    return fetch("https://github.com/login/oauth/access_token", {
-        method: "POST",
-        headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
-            client_secret: process.env.REACT_APP_GITHUB_CLIENT_SECRET,
-            code
-        })
-    }).then((res) => res.json());
+export async function getAuthToken(code: string) {
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+    const BACKEND_PORT = process.env.REACT_APP_BACKEND_PORT;
+    const authAddress = `${BACKEND_URL}:${BACKEND_PORT}/api/auth/getToken`;
+    // console.log(authAddress);
+    const res = await fetch(authAddress);
+    // console.log("getAuthToken", res);
 }
 
 type GitHubClientContextType = {

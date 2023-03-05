@@ -1,0 +1,36 @@
+{
+  "name": "@my-issue-tracker/backend",
+  "version": "0.0.1-dev",
+  "description": "Backend server for my-issue-tracker",
+  "main": "index.js",
+  "author": "Ting Fang, Tsai",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint ts/ --ext .ts",
+    "serve": "node ./dist/index.js",
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development",
+    "build:watch": "webpack --mode development --watch"
+  },
+  "private": true,
+  "devDependencies": {
+    "@babel/core": "^7.21.0",
+    "@babel/preset-env": "^7.20.2",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
+    "@types/node": "^18.14.6",
+    "node-polyfill-webpack-plugin": "^2.0.1",
+    "ts-loader": "^9.4.2",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.17.17",
+    "path-browserify": "^1.0.1",
+    "stream-browserify": "^3.0.0",
+    "url": "^0.11.0",
+    "util": "^0.12.5"
+  }
+}
