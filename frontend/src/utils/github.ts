@@ -21,8 +21,18 @@ export async function getAuthToken(code: string) {
     const BACKEND_PORT = process.env.REACT_APP_BACKEND_PORT;
     const authAddress = `${BACKEND_URL}:${BACKEND_PORT}/api/auth/getToken`;
     // console.log(authAddress);
-    const res = await fetch(authAddress);
-    // console.log("getAuthToken", res);
+    const res = await fetch(authAddress,{
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            code : code
+        })
+    });
+    console.log("getAuthToken", res);
+
 }
 
 type GitHubClientContextType = {

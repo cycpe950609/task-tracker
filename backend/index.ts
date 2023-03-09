@@ -25,9 +25,8 @@ console.log(`Server start at port ${BACKEND_PORT}`);
 
 const app: Express = express();
 app.use(cors(corsOptions))
+app.use(express.json())
 
 app.use("/api/auth/",cors(corsOptions),authRoute);
-
-
 
 app.listen(BACKEND_PORT);

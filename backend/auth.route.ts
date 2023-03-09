@@ -1,14 +1,31 @@
 import { Router } from "express";
+import qs from "qs";
+import axios from "axios";
 
 const authRoute = Router()
-authRoute.get("/getToken",(req,res)=>{
-    console.log("Get Token invoked")
+authRoute.get("/getToken",async (req,res)=>{
+    const code = req.query.code;
+    console.log("Get Code",code);
+    console.log("Get Token invoked");
+    // console.log(req.body);
     // console.log(res)
-    const rtv = "getToken";
-    return res.send(rtv);
-    //  res.status(200).json({
-    //     text : "getToken"
-    // })
+    console.log("client_id" , process.env.GITHUB_CLIENT_ID)
+    console.log("client_secret", process.env.GITHUB_CLIENT_SECRET)
+    console.log("code" , code)
+    const authUrl = "https://github.com/login/oauth/access_token";
+    const queryOption = {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code
+    };
+    const qstring = qs.stringify(queryOption);
+    const tokenUrl = `${authUrl}?${qstring}`
+    console.log(tokenUrl);
+    const {data} = await axios.post(tokenUrl);
+    const rtv = qs.parse(data);
+
+    console.log(rtv);
+    return res.send(rtv)
 })
 
 
