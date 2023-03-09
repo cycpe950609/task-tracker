@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { HashRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, HashRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import LoginPage from "./pages/login/login";
 import {
@@ -21,13 +21,13 @@ function App() {
         <>
             <GitHubClientContext.Provider value={githubClient}>
                 {/* prettier-ignore */}
-                <HashRouter>
+                <BrowserRouter>
                     <Routes>
                         <Route path="/" element={<LoginPage updateGithubAuth={updateGithubClient}/>}>
-
+                            <Route path="authed" element={<LoginPage updateGithubAuth={updateGithubClient}/>}/>
                         </Route>
                     </Routes>
-                </HashRouter>
+                </BrowserRouter>
             </GitHubClientContext.Provider>
         </>
     );

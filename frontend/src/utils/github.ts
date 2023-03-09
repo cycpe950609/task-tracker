@@ -1,13 +1,20 @@
 import React, { useContext } from "react";
+import qs from "qs";
+import axios from "axios";
 
 export function login() {
     const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
     const GITHUB_CLIENT_ID = process.env.REACT_APP_GITHUB_CLIENT_ID;
     const GITHUB_AUTH_SCOPE = ["user", "repo"];
 
-    const loginUri = encodeURI(
-        `${GITHUB_AUTH_URL}?client_id=${GITHUB_CLIENT_ID}&scope=${GITHUB_AUTH_SCOPE}`
-    );
+    const queryOption = {
+        client_id : GITHUB_CLIENT_ID,
+        scope : GITHUB_AUTH_SCOPE
+    }
+    const qstring = qs.stringify(queryOption,{ arrayFormat: 'comma' });
+
+    const loginUri = `${GITHUB_AUTH_URL}?${qstring}`
+    console.log(loginUri);
     window.location.href = loginUri;
 }
 
@@ -21,18 +28,17 @@ export async function getAuthToken(code: string) {
     const BACKEND_PORT = process.env.REACT_APP_BACKEND_PORT;
     const authAddress = `${BACKEND_URL}:${BACKEND_PORT}/api/auth/getToken`;
     // console.log(authAddress);
-    const res = await fetch(authAddress,{
-        method: "POST",
+    const {data} = await axios.post(authAddress,{
         headers: {
             Accept: "application/json",
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({
+        data: {
             code : code
-        })
+        }
     });
-    console.log("getAuthToken", res);
-
+    console.log("getAuthToken", data);
+    return data;    
 }
 
 type GitHubClientContextType = {
