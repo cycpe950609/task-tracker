@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import Button from "react-bootstrap/Button";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthTokenType, getAuthToken, login } from "../../utils/github";
 export type LoginPagePropsType = {
     updateGithubAuth: (authCode: string) => void;
@@ -8,8 +8,9 @@ export type LoginPagePropsType = {
 function LoginPage(props: LoginPagePropsType) {
     // Check if login
     const [currentUrlParams,setCurrentUrlParams] = useSearchParams();
+    const navigate = useNavigate();
     console.log(currentUrlParams);
-    // useEffect(()=>{
+    useEffect(()=>{
         if (currentUrlParams.has("code")) {
             // Loginned
             const authCode = currentUrlParams.get("code");
@@ -22,9 +23,10 @@ function LoginPage(props: LoginPagePropsType) {
                 props.updateGithubAuth(rtv.access_token);
                 currentUrlParams.delete("code");
                 setCurrentUrlParams(currentUrlParams);
+                navigate("/tasks");
             });
         }
-    // },[currentUrlParams, props, setCurrentUrlParams])
+    },[currentUrlParams])
 
     return (
         <div>

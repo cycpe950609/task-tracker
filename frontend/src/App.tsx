@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
-import { BrowserRouter, HashRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
+import TasksPage from "./pages/tasks/tasks";
 import LoginPage from "./pages/login/login";
 import {
     defaultGitHubClientContext,
@@ -23,9 +24,9 @@ function App() {
                 {/* prettier-ignore */}
                 <BrowserRouter>
                     <Routes>
-                        <Route path="/" element={<LoginPage updateGithubAuth={updateGithubClient}/>}>
-                            <Route path="authed" element={<LoginPage updateGithubAuth={updateGithubClient}/>}/>
-                        </Route>
+                        <Route path="/" element={<LoginPage updateGithubAuth={updateGithubClient}/>}/>{/* Move validation to standalone page */}
+                        <Route path="/authed" element={<LoginPage updateGithubAuth={updateGithubClient}/>}/>{/* Get token */}
+                        <Route path="/tasks" element={<TasksPage/>}/>{/* List issues */}
                     </Routes>
                 </BrowserRouter>
             </GitHubClientContext.Provider>
