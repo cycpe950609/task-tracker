@@ -3,33 +3,32 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import TasksPage from "./pages/tasks/tasks";
 import LoginPage from "./pages/login/login";
-import {
-    defaultGitHubClientContext,
-    GitHubClientContext
-} from "./utils/github";
+import GitHubClent from "./utils/github";
 
 function App() {
 
-    const [githubClient, setGithubClient] = useState(
-        defaultGitHubClientContext
-    );
-    const updateGithubClient = useCallback((authKey: string) => {
-        setGithubClient({
-            authKey: authKey
-        });
-    },[setGithubClient]);
+    const CLIENT_ID = process.env.REACT_APP_GITHUB_CLIENT_ID;
+    if(CLIENT_ID === undefined)
+        throw new Error("Cant get client id of GitHub app");
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+    if(BACKEND_URL === undefined)
+        throw new Error("Cant get server address");
+    const BACKEND_PORT = process.env.REACT_APP_BACKEND_PORT;
+    if(BACKEND_PORT === undefined)
+        throw new Error("Cant get server address");
+    const BACKEND_ADDRESS = `${BACKEND_URL}:${BACKEND_PORT}`;
     return (
         <>
-            <GitHubClientContext.Provider value={githubClient}>
+            <GitHubClent client_id={CLIENT_ID} backend_address={BACKEND_ADDRESS}>
                 {/* prettier-ignore */}
                 <BrowserRouter>
                     <Routes>
-                        <Route path="/" element={<LoginPage updateGithubAuth={updateGithubClient}/>}/>{/* Move validation to standalone page */}
-                        <Route path="/authed" element={<LoginPage updateGithubAuth={updateGithubClient}/>}/>{/* Get token */}
+                        <Route path="/" element={<LoginPage/>}/>{/* Move validation to standalone page */}
+                        <Route path="/authed" element={<LoginPage/>}/>{/* Get token */}
                         <Route path="/tasks" element={<TasksPage/>}/>{/* List issues */}
                     </Routes>
                 </BrowserRouter>
-            </GitHubClientContext.Provider>
+            </GitHubClent>
         </>
     );
 }

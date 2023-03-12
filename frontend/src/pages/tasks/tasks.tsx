@@ -3,14 +3,9 @@ import 'react-virtualized/styles.css';
 import { InfiniteLoader, List, AutoSizer } from "../../utils/virtualize";
 import { ListRowProps, ListRowRenderer } from "react-virtualized";
 import { Container,  Dropdown, Navbar, Form, Button, DropdownButton } from "react-bootstrap";
+import { filterStateType, TaskEntryType } from "../../utils/github";
 
-enum filterStateType  {
-    open = "Open",
-    inprocess = "In-Process",
-    done = "Done",
-    all = "all"
 
-}
 
 function TasksPage(){
     return <>
@@ -72,11 +67,7 @@ function NavigateBar(props : NavigateBarPropsType){
 type TaskListPropsType = {
     
 }
-type TaskEntryType = {
-    title : string,
-    body : string,
-    state : filterStateType,
-}
+
 function TaskList(props : TaskListPropsType) {
     const hasNextPage : boolean                 = false;
     const loadNextPage : () => Promise<boolean> = () => new Promise((res,rej)=>res(true));
