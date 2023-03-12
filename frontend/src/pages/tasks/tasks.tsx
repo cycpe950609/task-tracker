@@ -3,7 +3,7 @@ import 'react-virtualized/styles.css';
 import { InfiniteLoader, List, AutoSizer } from "../../utils/virtualize";
 import { ListRowProps, ListRowRenderer } from "react-virtualized";
 import { Container,  Dropdown, Navbar, Form, Button, DropdownButton } from "react-bootstrap";
-import { filterStateType, TaskEntryType } from "../../utils/github";
+import { filterStateType, TaskEntryType, useGitHub } from "../../utils/github";
 
 
 
@@ -69,16 +69,34 @@ type TaskListPropsType = {
 }
 
 function TaskList(props : TaskListPropsType) {
-    const hasNextPage : boolean                 = false;
-    const loadNextPage : () => Promise<boolean> = () => new Promise((res,rej)=>res(true));
-    const isLoadNextPage : boolean              = false;
-    const [list, setList]                       = useState([] as TaskEntryType[]);
-    const render : ListRowRenderer              = (props: ListRowProps) => <></>;
+    const githubClient = useGitHub();
+
+    const hasNextPage : boolean                 = githubClient.TotalPageCount > githubClient.PageCount;
+
+    const [isLoadNextPage , setIsLoadNextPage] = useState(false);
+    const loadNextPage : () => Promise<boolean> = async () => {
+        setIsLoadNextPage(true);
+        await githubClient.QueryTask(githubClient.QueryProp,githubClient.PageCount+1);
+        setIsLoadNextPage(false);
+        return true;
+    };
+    const render : ListRowRenderer              = (props: ListRowProps) => {
+        const { title, body, state} = githubClient.GetTask(props.index);
+
+        return props.isVisible && <>
+            <span> Title : {title}</span>
+            <span> Body : {body}</span>
+            <span> State : {state}</span>
+        </>
+    };
+    
+
+
     return (
       <InfiniteLoader
-        isRowLoaded={({index}) => index < list.length || hasNextPage}
+        isRowLoaded={({index}) => index < githubClient.CountTask || hasNextPage }
         loadMoreRows={isLoadNextPage ? () => new Promise((res,rej)=>res("noop")) : loadNextPage}
-        rowCount={hasNextPage ? list.length + 1 : list.length}>
+        rowCount={githubClient.CountTask}>
         {({onRowsRendered, registerChild}) => (
             <AutoSizer>
                 {({height,width}) => <List
