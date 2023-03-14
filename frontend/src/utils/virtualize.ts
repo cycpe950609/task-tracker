@@ -5,7 +5,7 @@ import {
     ListProps,
     AutoSizerProps,
     InfiniteLoader as _infiniteLoader,
-    InfiniteLoaderProps
+    InfiniteLoaderProps,
 } from "react-virtualized";
   
 export const List = _List as unknown as FC<ListProps>;

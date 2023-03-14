@@ -8,8 +8,9 @@ export enum filterStateType  {
     open = "Open",
     inprocess = "In-Process",
     done = "Done",
-    all = "All"
-
+    all = "All",
+    error = "Error",
+    loaded = "Loaded",
 }
 export type TaskEntryType = {
     title : string,
@@ -26,7 +27,8 @@ type GitHubClientContextType = {
     GetAccessToken : (code : string) => Promise<void>, // Use previous 'code' to get access token
     QueryTask : (query : QuerySchema,page : number) => Promise<void>, // Query a page of task and stored in context,
     QueryProp : QuerySchema, // Current Query task 
-    CountTask : number, // Total Loaded Tasks
+    TaskCount : number, // Total Loaded Tasks
+    TotalTaskCount : number, // Total Loaded Tasks
     PageCount : number, // Total Loaded Pages
     TotalPageCount : number,
     GetTask : (index : number) => TaskEntryType, // Get Task of index
@@ -86,12 +88,13 @@ function GitHubClent(props : GitHubClientPropsType) {
 
     const [taskList,setTaskList] = useState({} as TaskListType);
     const [taskCount,setTaskCount] = useState(0);
-    const [totalPageCount,setTotalPageCount] = useState(0);
+    const [totalTaskCount,setTotalTaskCount] = useState(10*PAGE_SIZE);
+    const [totalPageCount,setTotalPageCount] = useState(10);
 
     const [srvQueryProps, setSrvQueryProps] = useState({start : 0 } as ServerQuerySchemaExtention);
     const [queryProps, setQueryProps] = useState({} as QuerySchema);
 
-    const clientLogin = useCallback(() => {
+    const clientLogin = () => {
         const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
         const GITHUB_CLIENT_ID = props.client_id;
         const GITHUB_AUTH_SCOPE = ["user", "repo"];
@@ -105,9 +108,9 @@ function GitHubClent(props : GitHubClientPropsType) {
         const loginUri = `${GITHUB_AUTH_URL}?${qstring}`
         console.log(loginUri);
         window.location.href = loginUri;
-    },[props.client_id]);
+    };
 
-    const clientGetAccessToken = useCallback( async (code : string) => {
+    const clientGetAccessToken = async (code : string) => {
         const authAddress = `${props.backend_address}/api/auth/getToken`;
         // console.log(authAddress);
         const {data} = await axios.post(authAddress,{
@@ -122,40 +125,84 @@ function GitHubClent(props : GitHubClientPropsType) {
         console.log("getAuthToken", data);
         setAuthToken(data);
         return;
-    },[props.backend_address])
+    }
 
-    const clientQueryTask = useCallback( async (query : QuerySchema,page : number) => {
+    const clientQueryTask = async (query : QuerySchema,page : number) => {
         // TODO : validate
+        console.log(`Query page ${page} with schema`,query);
+        const query_state     = query.state   !== undefined ? query.state   : [QueryState.Open,QueryState.InProcess,QueryState.Done];
+        const query_contain   = query.contain !== undefined ? query.contain : "";
+        const query_orderby   = query.orderby !== undefined ? query.orderby : QueryOrderBy.CreateTime;
+        const query_order     = query.order   !== undefined ? query.order   : QueryOrder.Descend;
+        const QueryNotChanged  = query_state === queryProps.state &&
+                                query_contain === queryProps.contain &&
+                                query_order === queryProps.order &&
+                                query_orderby === queryProps.orderby
         setQueryProps(query);
+
+        if(!QueryNotChanged)
+            setTaskList({});
         
-    },[])
+        let newList : TaskListType = {...taskList};
+        const list = [];
+        for (let idx = 0; idx < PAGE_SIZE; idx++) {
+            list.push({ title : `Page ${page} ${idx + 1} title`, body: `Page ${page} ${idx + 1} body`, state : filterStateType.open } as TaskEntryType)
+        }
+        newList[page] = {
+            list : list
+        }
+        setTaskList(newList);
+        setTaskCount(taskCount + list.length);
+    }
 
-    const clientGetTask = useCallback((index : number) => {
+    const clientGetTask = (index : number) : TaskEntryType => {
         //TODO : check if task loaded
-        return {
-            title : "Task",
-            body : "Body",
-            state : filterStateType.done,
-        } as TaskEntryType
-    },[]);
+        const page = Math.floor(index / PAGE_SIZE);// + (index % PAGE_SIZE !== 0 ? 1 : 0);
+        // console.log(`Get task ${index} at Page ${page}`);
+        if(!(page in taskList))
+            return { 
+                title : "Error",
+                body  : `Page ${page} is not exist`,
+                state : filterStateType.error
+            };
+        if(taskList[page].list.length < index % PAGE_SIZE)
+            return {
+                title : "Error",
+                body : `Task ${index} is not exist`,
+                state : filterStateType.error
+            }
+        return taskList[page].list[index % PAGE_SIZE]
+    };
 
-    const clientSetTask  = useCallback((index : number, newValue : TaskEntryType) => {
+    const clientSetTask  = (index : number, newValue : TaskEntryType) => {
+        console.log(`Set task ${index}`);
+        const page = index / PAGE_SIZE + (index % PAGE_SIZE !== 0 ? 1 : 0);
+        if(!(page in taskList))
+            throw new Error("Task is not exist");
+        
+            
+    }
 
-    },[])
+    const clientDeleteTask = (index : number) => {
 
-    const clientDeleteTask = useCallback((index : number) => {
+    };
 
-    },[]);
+    const canLoadMoreData =  Object.keys(taskList).length < totalPageCount;
 
     return <>
         <GitHubClientContext.Provider value={{
+            // Auth
             Login : clientLogin,
             GetAccessToken : clientGetAccessToken,
+
+            // Load Tasks
             QueryTask : clientQueryTask,
             QueryProp : queryProps,
-            CountTask : taskCount,
+            TaskCount : taskCount + (canLoadMoreData ? 1 : 0) ,
+            TotalTaskCount : totalPageCount,
             PageCount : Object.keys(taskList).length,//TODO support partial load
             TotalPageCount : totalPageCount,
+            // Single task manager
             GetTask : clientGetTask,
             SetTask : clientSetTask,
             DeleteTask : clientDeleteTask,
