@@ -32,7 +32,7 @@ type GitHubClientContextType = {
     GetTask : (index : number) => TaskEntryType, // Get Task of index
     SetTask : (index : number, newValue : TaskEntryType) => void, // Update a Task of index
     DeleteTask : (index : number) => void, // Delete a Task of index
-    
+    CreateTask : (newValue: TaskEntryType) => void,
 };
 const GitHubClientContext = React.createContext({} as GitHubClientContextType);
 export const useGitHub = () => useContext(GitHubClientContext)
@@ -211,6 +211,10 @@ function GitHubClent(props : GitHubClientPropsType) {
         //     state       : ['open','inprocess','done'],
         //     body        : string
         // }
+        let newTaskList = {...taskList}
+        newTaskList[page].list[index % PAGE_SIZE] = {...newValue};
+        setTaskList(newTaskList);
+
         const {data} = await axios.patch(setAddress,{
             headers: {
                 Accept: "application/json",
@@ -248,6 +252,34 @@ function GitHubClent(props : GitHubClientPropsType) {
         console.log("delete result : ", data);
     };
 
+    const clientCreateTask  = async (newValue : TaskEntryType) => {
+        const createAddress = `${props.backend_address}/api/task/create`;
+
+        
+        if(newValue.body.split(/\s+/).length < 30)
+            throw new Error("Content too short. Must longer than 30 words.");
+            
+        // `/api/task/create` : {
+        //     title       : string,
+        //     state       : ['open','inprocess','done'],
+        //     body        : string
+        // }
+        // TODO : Update TaskList
+        const {data} = await axios.post(createAddress,{
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+            },
+            data: {
+                title       : newValue.title,
+                state       : newValue.state,
+                body        : newValue.body,
+            }
+        });
+        console.log("create result : ", data);
+            
+    }
+
     const canLoadMoreData =  Object.keys(taskList).length < totalPageCount;
 
     return <>
@@ -267,6 +299,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             GetTask : clientGetTask,
             SetTask : clientSetTask,
             DeleteTask : clientDeleteTask,
+            CreateTask : clientCreateTask,
         }}>
             {props.children}
         </GitHubClientContext.Provider>

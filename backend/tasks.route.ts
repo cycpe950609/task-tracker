@@ -10,7 +10,7 @@ taskRoute.post("/select",async (req,res)=>{
     const {state,contain,start,end,orderby} = req.body.data;
     const list = [];
     for (let idx = 0; idx < end - start; idx++) {
-        list.push({ title : `Quey ${idx} title`, body: `Quey from ${start} to ${end} body`, state : filterStateType.open } as TaskEntryType)
+        list.push({ title : `Query ${idx} title`, body: `Query from ${start} to ${end} body`, state : filterStateType.open } as TaskEntryType)
     }
     return res.send(JSON.stringify(list));
 })
