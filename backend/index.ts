@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 import express, { Express } from 'express';
 import authRoute from './auth.route';
 import cors  from "cors"
+import taskRoute from './tasks.route';
 
 config()//dotnev
 
@@ -28,5 +29,6 @@ app.use(cors(corsOptions))
 app.use(express.json())
 
 app.use("/api/auth/",cors(corsOptions),authRoute);
+app.use("/api/task/",cors(corsOptions),taskRoute);
 
 app.listen(BACKEND_PORT);

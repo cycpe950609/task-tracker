@@ -2,8 +2,6 @@ import React, { useCallback, useContext, useState } from "react";
 import qs from "qs";
 import axios from "axios";
 
-
-
 export enum filterStateType  {
     open = "Open",
     inprocess = "In-Process",
@@ -128,13 +126,14 @@ function GitHubClent(props : GitHubClientPropsType) {
     }
 
     const clientQueryTask = async (query : QuerySchema,page : number) => {
+        const selectAddress = `${props.backend_address}/api/task/select`;
         // TODO : validate
         console.log(`Query page ${page} with schema`,query);
         const query_state     = query.state   !== undefined ? query.state   : [QueryState.Open,QueryState.InProcess,QueryState.Done];
         const query_contain   = query.contain !== undefined ? query.contain : "";
         const query_orderby   = query.orderby !== undefined ? query.orderby : QueryOrderBy.CreateTime;
         const query_order     = query.order   !== undefined ? query.order   : QueryOrder.Descend;
-        const QueryNotChanged  = query_state === queryProps.state &&
+        const QueryNotChanged = query_state === queryProps.state &&
                                 query_contain === queryProps.contain &&
                                 query_order === queryProps.order &&
                                 query_orderby === queryProps.orderby
@@ -144,15 +143,36 @@ function GitHubClent(props : GitHubClientPropsType) {
             setTaskList({});
         
         let newList : TaskListType = {...taskList};
-        const list = [];
-        for (let idx = 0; idx < PAGE_SIZE; idx++) {
-            list.push({ title : `Page ${page} ${idx + 1} title`, body: `Page ${page} ${idx + 1} body`, state : filterStateType.open } as TaskEntryType)
-        }
+        // `/api/issue/select/` : {
+        //     state      : ['open','inprocess','done','deleted'], (1 to more)
+        //     contain    : string,
+        //     start      : number,
+        //     end        : number,
+        //     orderby    : ['title','createtime','body']
+        //     order      : ['desc','asc']
+        // }
+        const {data} = await axios.post(selectAddress,{
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+            },
+            data: {
+                state      : query_state,
+                contain    : query_contain,
+                start      : page*PAGE_SIZE,
+                end        : (page+1)*PAGE_SIZE,
+                orderby    : query_orderby,
+                order      : query_order,
+            }
+        });
+        console.log("select result : ", data);
+
+        // const list = []
         newList[page] = {
-            list : list
+            list : data
         }
         setTaskList(newList);
-        setTaskCount(taskCount + list.length);
+        setTaskCount(taskCount + data.length);
     }
 
     const clientGetTask = (index : number) : TaskEntryType => {
@@ -174,17 +194,58 @@ function GitHubClent(props : GitHubClientPropsType) {
         return taskList[page].list[index % PAGE_SIZE]
     };
 
-    const clientSetTask  = (index : number, newValue : TaskEntryType) => {
+    const clientSetTask  = async (index : number, newValue : TaskEntryType) => {
+        const setAddress = `${props.backend_address}/api/task/update`;
         console.log(`Set task ${index}`);
-        const page = index / PAGE_SIZE + (index % PAGE_SIZE !== 0 ? 1 : 0);
+        const page = Math.floor(index / PAGE_SIZE);// + (index % PAGE_SIZE !== 0 ? 1 : 0);
         if(!(page in taskList))
             throw new Error("Task is not exist");
         
+        if(newValue.body.split(/\s+/).length < 30)
+            throw new Error("Content too short. Must longer than 30 words.");
+            
+
+        // `/api/task/update` : {
+        //     id          : number,
+        //     title       : string,
+        //     state       : ['open','inprocess','done'],
+        //     body        : string
+        // }
+        const {data} = await axios.patch(setAddress,{
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+            },
+            data: {
+                id          : index,
+                title       : newValue.title,
+                state       : newValue.state,
+                body        : newValue.body,
+            }
+        });
+        console.log("select result : ", data);
             
     }
 
-    const clientDeleteTask = (index : number) => {
+    const clientDeleteTask = async (index : number) => {
+        const deleteAddress = `${props.backend_address}/api/task/delete`;
+        const page = Math.floor(index / PAGE_SIZE);// + (index % PAGE_SIZE !== 0 ? 1 : 0);
+        if(!(page in taskList))
+            throw new Error("Task is not exist");
 
+        // `/api/task/delete` : {
+        //     id          : number
+        // }
+        const {data} = await axios.delete(deleteAddress,{
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json"
+            },
+            data: {
+                id          : index,
+            }
+        });
+        console.log("delete result : ", data);
     };
 
     const canLoadMoreData =  Object.keys(taskList).length < totalPageCount;
