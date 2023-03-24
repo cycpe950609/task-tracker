@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useState } from "react";
 import qs from "qs";
 import axios from "axios";
+import {TaskEntryType} from "@my-issue-tracker/backend/taskType"
 
 export enum filterStateType  {
     open = "Open",
@@ -9,11 +10,6 @@ export enum filterStateType  {
     all = "All",
     error = "Error",
     loaded = "Loaded",
-}
-export type TaskEntryType = {
-    title : string,
-    body : string,
-    state : filterStateType,
 }
 export type AuthTokenType = {
     access_token: string;
@@ -86,8 +82,7 @@ function GitHubClent(props : GitHubClientPropsType) {
 
     const [taskList,setTaskList] = useState({} as TaskListType);
     const [taskCount,setTaskCount] = useState(0);
-    const [totalTaskCount,setTotalTaskCount] = useState(10*PAGE_SIZE);
-    const [totalPageCount,setTotalPageCount] = useState(10);
+    const [totalPageCount,setTotalPageCount] = useState(1);
 
     const [srvQueryProps, setSrvQueryProps] = useState({start : 0 } as ServerQuerySchemaExtention);
     const [queryProps, setQueryProps] = useState({} as QuerySchema);
@@ -144,10 +139,11 @@ function GitHubClent(props : GitHubClientPropsType) {
         
         let newList : TaskListType = {...taskList};
         // `/api/issue/select/` : {
+        //     token      : string,
         //     state      : ['open','inprocess','done','deleted'], (1 to more)
         //     contain    : string,
-        //     start      : number,
-        //     end        : number,
+        //     pagesizw   : number,
+        //     page       : number,
         //     orderby    : ['title','createtime','body']
         //     order      : ['desc','asc']
         // }
@@ -157,15 +153,23 @@ function GitHubClent(props : GitHubClientPropsType) {
                 "Content-Type": "application/json"
             },
             data: {
+                token      : authToken.access_token,
                 state      : query_state,
                 contain    : query_contain,
-                start      : page*PAGE_SIZE,
-                end        : (page+1)*PAGE_SIZE,
+                pagesize   : PAGE_SIZE,
+                page       : page,
                 orderby    : query_orderby,
                 order      : query_order,
             }
         });
         console.log("select result : ", data);
+
+        if(data.length < PAGE_SIZE){
+            setTotalPageCount(Object.keys(taskList).length + 1)
+        }
+        else{
+            setTotalPageCount(Object.keys(taskList).length)
+        }
 
         // const list = []
         newList[page] = {
@@ -181,12 +185,14 @@ function GitHubClent(props : GitHubClientPropsType) {
         // console.log(`Get task ${index} at Page ${page}`);
         if(!(page in taskList))
             return { 
+                index : -1,
                 title : "Error",
                 body  : `Page ${page} is not exist`,
                 state : filterStateType.error
             };
         if(taskList[page].list.length < index % PAGE_SIZE)
             return {
+                index: -1,
                 title : "Error",
                 body : `Task ${index} is not exist`,
                 state : filterStateType.error

@@ -5,8 +5,10 @@ export enum filterStateType  {
     all = "All",
     error = "Error",
     loaded = "Loaded",
+    deleted = "Deleted",
 }
 export type TaskEntryType = {
+    index : number,
     title : string,
     body : string,
     state : filterStateType,

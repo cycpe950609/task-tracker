@@ -3,8 +3,9 @@ import 'react-virtualized/styles.css';
 import { InfiniteLoader, List, AutoSizer } from "../../utils/virtualize";
 import { IndexRange, ListRowProps, ListRowRenderer } from "react-virtualized";
 import { Container,  Dropdown, Navbar, Form, Button, DropdownButton, Modal, Alert, Badge, Stack } from "react-bootstrap";
-import { filterStateType, TaskEntryType, useGitHub } from "../../utils/github";
+import { filterStateType, useGitHub } from "../../utils/github";
 import { parseJsonConfigFileContent } from "typescript";
+import { TaskEntryType } from "@my-issue-tracker/backend/taskType";
 
 type ModalPropsType = {
     id : number,
@@ -45,7 +46,6 @@ type EditingModalPropsType = ModalPropsType
                             & {update : (newValue : TaskEntryType) => void};
 
 function EditingModal(props:EditingModalPropsType) {
-    const githubClient = useGitHub();
     const [newTitle,setNewTitle]    = useState(props.task.title);
     const [newBody,setNewBody]      = useState(props.task.body);
     const [newState,setNewState]    = useState(props.task.state);
@@ -61,11 +61,12 @@ function EditingModal(props:EditingModalPropsType) {
             return;
         }
         const newValue : TaskEntryType = {
+            index   : props.task.index,
             title   : newTitle,
             body    : newBody,
             state   : newState
         }
-       props.update(newValue);
+        props.update(newValue);
         props.close();
     }
     return <>
@@ -136,6 +137,7 @@ function NavigateBar(props : NavigateBarPropsType){
     const [filterState, setFilterState] = useState(filterStateType.all);
     const [showModal,setShowModal] = useState(false);
     const templateTask : TaskEntryType = {
+        index : 0,
         title : "New Task",
         body : "What do you want to do ?",
         state : filterStateType.open
@@ -209,13 +211,12 @@ function TaskList(props : TaskListPropsType) {
         const BODY_SHOW_MAX_LENGTH = 60;
 
         const styles = props.style;
-        const index = props.index;
         const key = props.key;
     
         let content;
     
 
-        const { title, body, state} = githubClient.GetTask(props.index);
+        const { index, title, body, state} = githubClient.GetTask(props.index);
         const showTitleText = title.length > TITLE_SHOW_MAX_LENGTH ? title.slice(0,TITLE_SHOW_MAX_LENGTH - 3) + "..." : title;
         const showBodyText = body.length > BODY_SHOW_MAX_LENGTH ? body.slice(0,BODY_SHOW_MAX_LENGTH - 3) + "..." : body;
         const isLoaded = (state as filterStateType != filterStateType.loaded) && (state as filterStateType != filterStateType.error)
@@ -246,7 +247,7 @@ function TaskList(props : TaskListPropsType) {
         if(isLoaded)
             content = props.isVisible  && <>
                 <Stack direction="horizontal" >
-                    <span className="align-items-center badge bg-secondary">#{props.index}</span>
+                    <span className="align-items-center badge bg-secondary">#{index}</span>
                     <Stack>
                         <strong className="ms-2">{showTitleText}</strong>
                         <small className="ms-2" >{showBodyText}</small>
