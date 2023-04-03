@@ -1,16 +1,9 @@
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import qs from "qs";
 import axios from "axios";
-import {TaskEntryType} from "@my-issue-tracker/backend/taskType"
+import { TaskEntryType } from "@my-issue-tracker/backend/taskType"
+import { filterStateType, QueryOrder, QueryOrderBy, QuerySchema, QueryState } from "./QuerySchema";
 
-export enum filterStateType  {
-    open = "Open",
-    inprocess = "In-Process",
-    done = "Done",
-    all = "All",
-    error = "Error",
-    loaded = "Loaded",
-}
 export type AuthTokenType = {
     access_token: string;
     scope: string;
@@ -19,8 +12,9 @@ export type AuthTokenType = {
 type GitHubClientContextType = {
     Login : () => void,// Login GitHub to get 'code'
     GetAccessToken : (code : string) => Promise<void>, // Use previous 'code' to get access token
-    QueryTask : (query : QuerySchema,page : number) => Promise<void>, // Query a page of task and stored in context,
+    QueryTask : (page : number) => Promise<void>, // Query a page of task and stored in context,
     QueryProp : QuerySchema, // Current Query task 
+    SetQueryProp : (query : QuerySchema) => void,
     TaskCount : number, // Total Loaded Tasks
     TotalTaskCount : number, // Total Loaded Tasks
     PageCount : number, // Total Loaded Pages
@@ -40,28 +34,6 @@ export type GitHubClientPropsType = {
     children    : React.ReactNode
 }
 
-export enum QueryState {
-    Open = "open",
-    InProcess = "inprocess",
-    Done = "done",
-    Deleted = "deleted"
-}
-export enum QueryOrderBy {
-    Title = "title",
-    CreateTime = "createtime",
-    Body = "body",
-}
-export enum QueryOrder {
-    Ascend = "asc",
-    Descend = "desc"
-}
-
-export type QuerySchema = {
-    state?      : QueryState[]
-    contain?    : string,
-    orderby?    : QueryOrderBy
-    order?      : QueryOrder,
-}
 type ServerQuerySchemaExtention = {
     start       : number,
     end?        : number,
@@ -85,7 +57,14 @@ function GitHubClent(props : GitHubClientPropsType) {
     const [totalPageCount,setTotalPageCount] = useState(1);
 
     const [srvQueryProps, setSrvQueryProps] = useState({start : 0 } as ServerQuerySchemaExtention);
-    const [queryProps, setQueryProps] = useState({} as QuerySchema);
+    const [queryProps, setQueryProps] = useState({
+        state       : QueryState.All,
+        contain     : "",
+        orderby     : QueryOrderBy.CreateTime,
+        order       : QueryOrder.Ascend
+    } as QuerySchema);
+
+    // console.log(taskList);
 
     const clientLogin = () => {
         const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
@@ -120,22 +99,61 @@ function GitHubClent(props : GitHubClientPropsType) {
         return;
     }
 
-    const clientQueryTask = async (query : QuerySchema,page : number) => {
-        const selectAddress = `${props.backend_address}/api/task/select`;
-        // TODO : validate
-        console.log(`Query page ${page} with schema`,query);
-        const query_state     = query.state   !== undefined ? query.state   : [QueryState.Open,QueryState.InProcess,QueryState.Done];
+    const clientSetQueryProp = async (query: QuerySchema) => {
+        const query_state     = query.state   !== undefined ? query.state   : QueryState.All;
         const query_contain   = query.contain !== undefined ? query.contain : "";
         const query_orderby   = query.orderby !== undefined ? query.orderby : QueryOrderBy.CreateTime;
         const query_order     = query.order   !== undefined ? query.order   : QueryOrder.Descend;
+        
+        // console.log(query_state,queryProps.state)
+        console.log(`Change task state from ${queryProps.state} to ${query_state}`)
+        
+        // console.log(query_state , queryProps.state) // &&
+        // console.log(query_contain , queryProps.contain) // &&
+        // console.log(query_order , queryProps.order) // &&
+        // console.log(query_orderby , queryProps.orderby) //
         const QueryNotChanged = query_state === queryProps.state &&
                                 query_contain === queryProps.contain &&
                                 query_order === queryProps.order &&
                                 query_orderby === queryProps.orderby
-        setQueryProps(query);
 
-        if(!QueryNotChanged)
+        const fullQuery : QuerySchema = {
+            state       : query_state,
+            contain     : query_contain,
+            orderby     : query_orderby,
+            order       : query_order,
+        }
+
+        if(!QueryNotChanged){
+            setQueryProps(fullQuery);
+            // console.log("Remove TaskList")
             setTaskList({});
+            setTaskCount(0)
+            setTotalPageCount(1)
+            // await clientQueryTask(0);
+        }
+
+        console.log("Test======================================================")
+    }
+
+    useEffect(() => {
+        const updateQuery =async () => {
+            if(authToken.access_token !== undefined)
+                await clientQueryTask(0);
+        }
+        updateQuery()
+    },[queryProps])
+
+    const clientQueryTask = async (page : number) => {
+        const selectAddress = `${props.backend_address}/api/task/select`;
+        // TODO : validate
+        console.log(`Query page ${page} with schema`,queryProps);
+        
+        const query_state     = queryProps.state   ;
+        const query_contain   = queryProps.contain ;
+        const query_orderby   = queryProps.orderby ;
+        const query_order     = queryProps.order   ;
+        // clientSetQueryProp(query)
         
         let newList : TaskListType = {...taskList};
         // `/api/issue/select/` : {
@@ -164,19 +182,17 @@ function GitHubClent(props : GitHubClientPropsType) {
         });
         console.log("select result : ", data);
 
-        if(data.length < PAGE_SIZE){
-            setTotalPageCount(Object.keys(taskList).length + 1)
-        }
-        else{
-            setTotalPageCount(Object.keys(taskList).length)
-        }
+        setTotalPageCount(Object.keys(taskList).length + (data.length < PAGE_SIZE ? 1 : 0))
 
         // const list = []
-        newList[page] = {
-            list : data
+        if(data.length > 0){
+            newList[page] = {
+                list : data
+            }
+            setTaskList(newList);
         }
-        setTaskList(newList);
         setTaskCount(taskCount + data.length);
+        console.log("Query Success")
     }
 
     const clientGetTask = (index : number) : TaskEntryType => {
@@ -297,6 +313,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             // Load Tasks
             QueryTask : clientQueryTask,
             QueryProp : queryProps,
+            SetQueryProp : clientSetQueryProp,
             TaskCount : taskCount + (canLoadMoreData ? 1 : 0) ,
             TotalTaskCount : totalPageCount,
             PageCount : Object.keys(taskList).length,//TODO support partial load

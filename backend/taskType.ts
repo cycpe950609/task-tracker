@@ -1,12 +1,5 @@
-export enum filterStateType  {
-    open = "Open",
-    inprocess = "In-Process",
-    done = "Done",
-    all = "All",
-    error = "Error",
-    loaded = "Loaded",
-    deleted = "Deleted",
-}
+import {filterStateType} from "@my-issue-tracker/frontend/src/utils/QuerySchema"
+
 export type TaskEntryType = {
     index : number,
     title : string,

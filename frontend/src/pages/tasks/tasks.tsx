@@ -3,9 +3,10 @@ import 'react-virtualized/styles.css';
 import { InfiniteLoader, List, AutoSizer } from "../../utils/virtualize";
 import { IndexRange, ListRowProps, ListRowRenderer } from "react-virtualized";
 import { Container,  Dropdown, Navbar, Form, Button, DropdownButton, Modal, Alert, Badge, Stack } from "react-bootstrap";
-import { filterStateType, useGitHub } from "../../utils/github";
+import { useGitHub } from "../../utils/github";
 import { parseJsonConfigFileContent } from "typescript";
 import { TaskEntryType } from "@my-issue-tracker/backend/taskType";
+import {filterStateType, QueryState} from "../../utils/QuerySchema";
 
 type ModalPropsType = {
     id : number,
@@ -131,10 +132,24 @@ export default TasksPage;
 type NavigateBarPropsType = {
     
 }
+
 function NavigateBar(props : NavigateBarPropsType){
     const githubClient = useGitHub();
 
     const [filterState, setFilterState] = useState(filterStateType.all);
+    const updateFilterState = (state:filterStateType) => {
+        setFilterState(state);
+        const newQuery = {...githubClient.QueryProp};
+        switch(state){
+            case filterStateType.all        : { newQuery.state = QueryState.All; break; }
+            case filterStateType.open       : { newQuery.state = QueryState.Open; break; }
+            case filterStateType.inprocess  : { newQuery.state = QueryState.InProcess; break; }
+            case filterStateType.done       : { newQuery.state = QueryState.Done; break; }
+            default                         : { newQuery.state = QueryState.All; break; }
+        }
+        githubClient.SetQueryProp(newQuery)
+    }
+
     const [showModal,setShowModal] = useState(false);
     const templateTask : TaskEntryType = {
         index : 0,
@@ -149,23 +164,23 @@ function NavigateBar(props : NavigateBarPropsType){
             <DropdownButton title={filterState}>
                 <Dropdown.Menu>
                     <Dropdown.Item 
-                        onClick={() => setFilterState(filterStateType.all)} 
+                        onClick={() => updateFilterState(filterStateType.all)} 
                         active={filterState === filterStateType.all}>
                             All
                     </Dropdown.Item>
                     <Dropdown.Divider/>
                     <Dropdown.Item 
-                        onClick={() => setFilterState(filterStateType.open)} 
+                        onClick={() => updateFilterState(filterStateType.open)} 
                         active={filterState === filterStateType.open}>
                             Open
                     </Dropdown.Item>
                     <Dropdown.Item 
-                        onClick={() => setFilterState(filterStateType.inprocess)} 
+                        onClick={() => updateFilterState(filterStateType.inprocess)} 
                         active={filterState === filterStateType.inprocess}>
                             In-Process
                     </Dropdown.Item>
                     <Dropdown.Item 
-                        onClick={() => setFilterState(filterStateType.done)} 
+                        onClick={() => updateFilterState(filterStateType.done)} 
                         active={filterState === filterStateType.done}>
                             Done
                     </Dropdown.Item>
@@ -189,7 +204,10 @@ type TaskListPropsType = {
     
 }
 function TaskList(props : TaskListPropsType) {
+
     const githubClient = useGitHub();
+
+    // console.log("Rerender TaskList")
 
     const hasNextPage = () => { console.log("githubClient.PageCount",githubClient.PageCount); return githubClient.TotalPageCount > githubClient.PageCount};
 
@@ -197,7 +215,7 @@ function TaskList(props : TaskListPropsType) {
     const loadNextPage : (params : IndexRange) => Promise<boolean> = async (params: IndexRange) => {
         console.log("loadNextPage",params.startIndex,params.stopIndex)
         setIsLoadNextPage(true);
-        await githubClient.QueryTask(githubClient.QueryProp,githubClient.PageCount);
+        await githubClient.QueryTask(githubClient.PageCount);
         setIsLoadNextPage(false);
         return true;
     };
@@ -275,6 +293,7 @@ function TaskList(props : TaskListPropsType) {
         setEditingID(-1);  
     }
 
+    console.log(`TaskCount : ${githubClient.TaskCount}`)
 
     return (
         <div className="p-2 w-100 h-100" style={{flex: "1 1 auto"}}>
@@ -283,14 +302,14 @@ function TaskList(props : TaskListPropsType) {
                     // console.log(`isRowLoaded ${index}`)
                     const {state} = githubClient.GetTask(index); 
                     const isLoaded = (state as filterStateType != filterStateType.loaded) && (state as filterStateType != filterStateType.error)
-                    // console.log(`isRowLoaded ${index} : ${isLoaded}`)
+                    console.log(`isRowLoaded ${index} : ${isLoaded}`)
                     return isLoaded;
                 } }
                 loadMoreRows={
-                // isLoadNextPage ? () =>{
-                //     console.log("isLoadNextPage");
-                //     return new Promise((res,rej)=>res("noop")) 
-                // }: 
+                isLoadNextPage ? () =>{
+                    console.log("isLoadNextPage");
+                    return new Promise((res,rej)=>res("noop")) 
+                }: 
                 loadNextPage}
                 rowCount={githubClient.TaskCount}
                 minimumBatchSize={10}

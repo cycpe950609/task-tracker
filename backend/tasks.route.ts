@@ -1,8 +1,9 @@
 import { config } from 'dotenv';
-import { Router } from "express";
+import { query, Router } from "express";
 import qs from "qs";
 import axios from "axios";
-import { filterStateType, TaskEntryType } from "./taskType";
+import { TaskEntryType } from "./taskType";
+import { filterStateType, QueryOrderBy, QueryState } from "@my-issue-tracker/frontend/src/utils/QuerySchema"
 
 config()//dotnev
 
@@ -18,14 +19,41 @@ taskRoute.post("/select",async (req,res)=>{
     console.log("=============================================================")
     console.log(req.body.data);
     console.log("=============================================================")
-    const {token,state,contain,pagesize,page,orderby} = req.body.data;
+    const {token,state: _state,_contain,_pagesize,query_page,_orderby} = req.body.data;
+
+    console.log(`query_state : ${_state}`);
+    const query_state     = _state   !== undefined ? _state   : QueryState.All;
+    const query_contain   = _contain !== undefined ? _contain : "";
+    const query_pagesize  = _pagesize!== undefined ? _pagesize : 10;
+    const query_orderby   = _orderby !== undefined ? _orderby : QueryOrderBy.CreateTime;
+
+    const getQueryLabel = () => {
+        switch(query_state){
+            case QueryState.All         : { return undefined };
+            case QueryState.Open        : { return undefined };
+            case QueryState.InProcess   : { return "inprocess" };
+            case QueryState.Done        : { return "done" };
+            default                     : { return undefined };
+        }
+    }
+
+    const QueryState2filterStateType = (state:QueryState) => {
+        switch(state){
+            case QueryState.All         : { return filterStateType.all };
+            case QueryState.Open        : { return filterStateType.open };
+            case QueryState.InProcess   : { return filterStateType.inprocess };
+            case QueryState.Done        : { return filterStateType.done };
+            default                     : { return filterStateType.error }
+        }
+    }
 
     const queryOption = {
-        state       : 'all',
-        per_page    : pagesize,
-        page        : page
+        labels      : getQueryLabel(),
+        per_page    : query_pagesize,
+        page        : query_page
     }
     const qstring = qs.stringify(queryOption,{ arrayFormat: 'comma' });
+    console.log(qstring)
 
     const selectUri = `${GITHUB_LIST_ISSUE_URL}?${qstring}`
 
@@ -48,10 +76,11 @@ taskRoute.post("/select",async (req,res)=>{
         }[]
     }
 
-    const list = rtv.data.map((item: queryIssueType) => {
+    const list : TaskEntryType[] = []
+    rtv.data.map((item: queryIssueType) => {
         // console.log(item.title,item.body)
 
-        const getState = () => {
+        const getItemState = () => {
             if(item.state === "open"){
                 let isInProcess = false;
                 let isDone = false;
@@ -69,20 +98,23 @@ taskRoute.post("/select",async (req,res)=>{
             }
             return filterStateType.deleted
         }
-
-        return { 
-            index : item.number,
-            title : item.title, 
-            body: item.body, 
-            state : getState() 
-        } as TaskEntryType
+        // if(getItemState() === state || state === filterStateType.all)
+        if(getItemState() == QueryState2filterStateType(query_state) || query_state == QueryState.All)
+            list.push({ 
+                index : item.number,
+                title : item.title, 
+                body: item.body, 
+                state : getItemState()
+            } as TaskEntryType)
     });
     // const listLength = list.length
-    // for (let idx = 0; idx < 10 - listLength; idx++) {
+    // for (let idx = 0; idx < 10 - listLength - 1; idx++) {
     //     list.push({ title : `Query ${idx} title`, body: `Query body`, state : filterStateType.open } as TaskEntryType)
     // }
-    console.log("Current Queue : ",page)
+    // console.log("Current Queue : ",page)
     console.log(list)
+
+    console.log("===========================FINISH SELECT===========================")
 
     return res.send(JSON.stringify(list));
 })
