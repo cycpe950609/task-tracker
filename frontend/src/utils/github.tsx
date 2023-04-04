@@ -271,13 +271,15 @@ function GitHubClent(props : GitHubClientPropsType) {
                     "Content-Type": "application/json"
                 },
                 data: {
-                    id          : index,
+                    token       : authToken.access_token,
+                    id          : taskList[page].list[index % PAGE_SIZE].index,
                     title       : newValue.title,
                     state       : newValue.state,
                     body        : newValue.body,
                 }
             });
-            console.log("select result : ", data);
+            console.log("update result : ", data);
+            clearTaskList(); // Force update
         } catch (error) {
             processError("Something error when update task, try to login again")
         }            

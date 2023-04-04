@@ -156,14 +156,6 @@ taskRoute.post("/create",async (req,res)=>{
         labels      : getQueryLabel(_state)
     }
 
-    console.log(_state)
-    console.log(JSON.stringify(createOption))
-    const qstring = qs.stringify(createOption,{ arrayFormat: 'comma' });
-    console.log(qstring)
-
-    const createUri = `${GITHUB_CREATE_ISSUE_URL}?${qstring}`
-    const url = GITHUB_CREATE_ISSUE_URL;
-
     const rtv = await axios.post(GITHUB_CREATE_ISSUE_URL, JSON.stringify(createOption),{
         headers : {
             "Accept" : "application/vnd.github+json",
@@ -179,8 +171,47 @@ taskRoute.post("/create",async (req,res)=>{
 })
 
 taskRoute.patch("/update",async (req,res)=>{
-    console.log(req.body.data);
+    const GITHUB_UPDATE_ISSUE_URL = `https://api.github.com/repos/${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}/issues`
+
+    // console.log(req);
+
+    const {token,id,state: _state,title: _title,body: _body} = req.body.data;
+
+    if(token == undefined)
+        return res.status(401).send("")
+    if(_title.length === 0)
+        res.status(400).send("Title is required.")
+    if(_body.split(/\s+/).length < 30)
+        res.status(400).send("Content too short. Must longer than 30 words.");
     
+    const updateUrl = `${GITHUB_UPDATE_ISSUE_URL}/${id}`
+
+    const getQueryLabel = (query_state : filterStateType) => {
+        switch(query_state){
+            case filterStateType.all            : { return [] };
+            case filterStateType.open           : { return [] };
+            case filterStateType.inprocess      : { return ["inprocess"] };
+            case filterStateType.done           : { return ["done"] };
+            default                             : { return [] };
+        }
+    }
+
+    const updateOption = {
+        title       : _title,
+        body        : _body,
+        labels      : getQueryLabel(_state)
+    }
+
+    const rtv = await axios.patch(updateUrl, JSON.stringify(updateOption),{
+        headers : {
+            "Accept" : "application/vnd.github+json",
+            "Authorization" : `Bearer ${token}`,
+            "X-GitHub-Api-Version" : "2022-11-28",
+            'Content-Type':'application/x-www-form-urlencoded'
+        },
+    })
+
+    // console.log(rtv)
     return res.send("update")
 })
 
