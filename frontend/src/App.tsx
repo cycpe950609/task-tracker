@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import TasksPage from "./pages/tasks/tasks";
-import LoginPage from "./pages/login/login";
+import { LoginPage, AuthPage } from "./pages/login/login";
 import GitHubClent from "./utils/github";
 
 function App() {
@@ -23,8 +23,8 @@ function App() {
                 {/* prettier-ignore */}
                 <BrowserRouter>
                     <Routes>
-                        <Route path="/" element={<LoginPage><span>Login in 2 seconds...</span></LoginPage>}/>{/* Move validation to standalone page */}
-                        <Route path="/authed" element={<LoginPage><span>Process login...</span></LoginPage>}/>{/* Get token */}
+                        <Route path="/" element={<LoginPage/>}/>{/* Move validation to standalone page */}
+                        <Route path="/authed" element={<AuthPage/>}/>{/* Get token */}
                         <Route path="/tasks" element={<TasksPage/>}/>{/* List issues */}
                     </Routes>
                 </BrowserRouter>

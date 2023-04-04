@@ -23,6 +23,7 @@ type GitHubClientContextType = {
     SetTask : (index : number, newValue : TaskEntryType) => void, // Update a Task of index
     DeleteTask : (index : number) => void, // Delete a Task of index
     CreateTask : (newValue: TaskEntryType) => void,
+    LastErrorMessage : string,
 };
 const GitHubClientContext = React.createContext({} as GitHubClientContextType);
 export const useGitHub = () => useContext(GitHubClientContext)
@@ -64,6 +65,13 @@ function GitHubClent(props : GitHubClientPropsType) {
         order       : QueryOrder.Ascend
     } as QuerySchema);
 
+    const [errorMsg,setErrorMsg] = useState("");
+
+    const processError = (error: string) => {
+        setErrorMsg(error);
+        processError(error);
+    }
+
     // console.log(taskList);
 
     const clientLogin = () => {
@@ -82,7 +90,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             console.log(loginUri);
             window.location.href = loginUri;
         } catch (error) {
-            throw new Error("Something error when logining, try to login again")
+            processError("Something error when logining, try to login again")
         }
     };
 
@@ -103,7 +111,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             setAuthToken(data);
             return;
         } catch (error) {
-            throw new Error("Something error when logining, try to login again")
+            processError("Something error when logining, try to login again")
         }
     }
 
@@ -142,7 +150,7 @@ function GitHubClent(props : GitHubClientPropsType) {
                 // await clientQueryTask(0);
             }
         } catch (error) {
-            throw new Error("Something error when update query, try to login again")
+            processError("Something error when update query, try to login again")
         }
     }
 
@@ -204,7 +212,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             }
             setTaskCount(taskCount + data.length);
         } catch (error) {
-            throw new Error("Something error when query tasks, try to login again")
+            processError("Something error when query tasks, try to login again")
         }
     }
 
@@ -236,10 +244,10 @@ function GitHubClent(props : GitHubClientPropsType) {
             console.log(`Set task ${index}`);
             const page = Math.floor(index / PAGE_SIZE);// + (index % PAGE_SIZE !== 0 ? 1 : 0);
             if(!(page in taskList))
-                throw new Error("Task is not exist");
+                processError("Task is not exist");
             
             if(newValue.body.split(/\s+/).length < 30)
-                throw new Error("Content too short. Must longer than 30 words.");
+                processError("Content too short. Must longer than 30 words.");
                 
 
             // `/api/task/update` : {
@@ -266,7 +274,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             });
             console.log("select result : ", data);
         } catch (error) {
-            throw new Error("Something error when update task, try to login again")
+            processError("Something error when update task, try to login again")
         }            
     }
 
@@ -275,7 +283,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             const deleteAddress = `${props.backend_address}/api/task/delete`;
             const page = Math.floor(index / PAGE_SIZE);// + (index % PAGE_SIZE !== 0 ? 1 : 0);
             if(!(page in taskList))
-                throw new Error("Task is not exist");
+                processError("Task is not exist");
 
             // `/api/task/delete` : {
             //     id          : number
@@ -291,7 +299,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             });
             console.log("delete result : ", data);
         } catch (error) {
-            throw new Error("Something error when delete task, try to login again")
+            processError("Something error when delete task, try to login again")
         }
     };
 
@@ -301,7 +309,7 @@ function GitHubClent(props : GitHubClientPropsType) {
 
             
             if(newValue.body.split(/\s+/).length < 30)
-                throw new Error("Content too short. Must longer than 30 words.");
+                processError("Content too short. Must longer than 30 words.");
                 
             // `/api/task/create` : {
             //     title       : string,
@@ -322,7 +330,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             });
             console.log("create result : ", data);
         } catch (error) {
-            throw new Error("Something error when create task, try to login again")
+            processError("Something error when create task, try to login again")
             
         }  
     }
@@ -348,6 +356,8 @@ function GitHubClent(props : GitHubClientPropsType) {
             SetTask : clientSetTask,
             DeleteTask : clientDeleteTask,
             CreateTask : clientCreateTask,
+            //Error message
+            LastErrorMessage : errorMsg,
         }}>
             {props.children}
         </GitHubClientContext.Provider>
