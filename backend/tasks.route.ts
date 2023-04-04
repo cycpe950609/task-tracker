@@ -3,7 +3,7 @@ import { query, Router } from "express";
 import qs from "qs";
 import axios from "axios";
 import { TaskEntryType } from "./taskType";
-import { filterStateType, QueryOrderBy, QueryState } from "@my-issue-tracker/frontend/src/utils/QuerySchema"
+import { filterStateType, QueryOrder, QueryOrderBy, QueryState } from "@my-issue-tracker/frontend/src/utils/QuerySchema"
 
 config()//dotnev
 
@@ -19,7 +19,7 @@ taskRoute.post("/select",async (req,res,next)=>{
     console.log("=============================================================")
     console.log(req.body.data);
     console.log("=============================================================")
-    const {token,state: _state,contain: _contain,pagesize: _pagesize,page: query_page,orderby: _orderby} = req.body.data;
+    const {token,state: _state,contain: _contain,pagesize: _pagesize,page: query_page,order: _order} = req.body.data;
 
     if(token == undefined)
         return res.status(401).send("")
@@ -28,7 +28,7 @@ taskRoute.post("/select",async (req,res,next)=>{
     const query_state     = _state   !== undefined ? _state   : QueryState.All;
     const query_contain   = _contain !== undefined ? _contain : "";
     const query_pagesize  = _pagesize!== undefined ? _pagesize : 10;
-    const query_orderby   = _orderby !== undefined ? _orderby : QueryOrderBy.CreateTime;
+    const query_order     = _order !== undefined ? _order : QueryOrder.NewerFirst;
 
     const getQueryLabel = () => {
         switch(query_state){
@@ -56,6 +56,7 @@ taskRoute.post("/select",async (req,res,next)=>{
         "repo"      : `${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}`,
         "state"     : "open",
         "label"    : getQueryLabel(),
+
     } as {[key:string]:string}
     let qstring : string = `"${query_contain.replace(/"/g,'\\"')}" `;
     Object.keys(qArgs).map((val)=>{
@@ -66,7 +67,9 @@ taskRoute.post("/select",async (req,res,next)=>{
     const queryOption = {
         q           : qstring,
         per_page    : query_pagesize,
-        page        : query_page
+        page        : query_page,
+        sort        : "created",
+        order       : query_order
     }
     const queryString = qs.stringify(queryOption,{ arrayFormat: 'comma' });
     console.log(queryString)

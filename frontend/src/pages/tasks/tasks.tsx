@@ -2,11 +2,11 @@ import React, { FormEvent, useState } from "react";
 import 'react-virtualized/styles.css';
 import { InfiniteLoader, List, AutoSizer } from "../../utils/virtualize";
 import { IndexRange, ListRowProps, ListRowRenderer } from "react-virtualized";
-import { Container,  Dropdown, Navbar, Form, Button, DropdownButton, Modal, Alert, Badge, Stack } from "react-bootstrap";
+import { Container,  Dropdown, Navbar, Form, Button, DropdownButton, Modal, Alert, Badge, Stack, ToggleButton } from "react-bootstrap";
 import { useGitHub } from "../../utils/github";
 import { parseJsonConfigFileContent } from "typescript";
 import { TaskEntryType } from "@my-issue-tracker/backend/taskType";
-import {filterStateType, QueryState} from "../../utils/QuerySchema";
+import {filterStateType, QueryOrder, QueryState} from "../../utils/QuerySchema";
 import { useNavigate } from "react-router-dom";
 
 type ModalPropsType = {
@@ -146,12 +146,18 @@ function NavigateBar(props : NavigateBarPropsType){
     const githubClient = useGitHub();
 
     const [filterState, setFilterState] = useState(filterStateType.all);
+    
+    const [showModal,setShowModal] = useState(false);
+    const [containText,setContainText] = useState("");
+
+    const [IsAsc,setIsAsc] = useState(false);// Newer first
+
     const updateFilterState = (state:filterStateType) => {
         setFilterState(state);
-        updateQuery(state)
+        updateQuery(state,IsAsc)
     }
 
-    const updateQuery = (state : filterStateType = filterState) => {
+    const updateQuery = (state : filterStateType,orderIsDesc : boolean) => { 
         const newQuery = {...githubClient.QueryProp};
         switch(state){
             case filterStateType.all        : { newQuery.state = QueryState.All; break; }
@@ -161,16 +167,19 @@ function NavigateBar(props : NavigateBarPropsType){
             default                         : { newQuery.state = QueryState.All; break; }
         }
         newQuery.contain = containText;
+        newQuery.order = orderIsDesc ? QueryOrder.NewerFirst : QueryOrder.OlderFirst;
         githubClient.SetQueryProp(newQuery)
     }
     const searchSubmit = (e : FormEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        updateQuery()
+        updateQuery(filterState,IsAsc);
     };
 
-    const [showModal,setShowModal] = useState(false);
-    const [containText,setContainText] = useState("");
+    const updateOrder = (isAsc: boolean) => {
+        setIsAsc(isAsc);
+        updateQuery(filterState,!isAsc);
+    }
 
     const templateTask : TaskEntryType = {
         index : 0,
@@ -182,7 +191,7 @@ function NavigateBar(props : NavigateBarPropsType){
     return <>
         {showModal && <EditingModal id={0} close={() => setShowModal(false)} task={templateTask} update={(newValue) => githubClient.CreateTask(newValue)} />}
         <Navbar bg="dark" className="p-2 nav-fill w-100" >
-            <DropdownButton title={filterState}>
+            <DropdownButton title={filterState} className="m-1">
                 <Dropdown.Menu>
                     <Dropdown.Item 
                         onClick={() => updateFilterState(filterStateType.all)} 
@@ -207,18 +216,29 @@ function NavigateBar(props : NavigateBarPropsType){
                     </Dropdown.Item>
                 </Dropdown.Menu>
             </DropdownButton>
-            <Form className="d-flex flex-grow-1 m-2" onSubmit={searchSubmit}>
+            <Form className="d-flex flex-grow-1" onSubmit={searchSubmit}>
                 <Form.Control
                 type="search"
                 placeholder="Search in content of task"
-                className="me-2"
+                className="mx-1"
                 aria-label="Search"
                 value={containText}
                 onChange={(e) => setContainText(e.target.value)}
                 />
-                <Button type="submit">Search</Button>
+                <Button className="mx-1" type="submit">Search</Button>
             </Form>
-            <Button onClick={() => setShowModal(true)}>Create</Button>
+            <ToggleButton
+                className="m-1"
+                id="toggle-check"
+                type="checkbox"
+                variant="primary"
+                checked={IsAsc}
+                value="1"
+                onChange={(e) => updateOrder(e.currentTarget.checked)}
+            >
+                {IsAsc ? "Newer first" : "Older first" }
+            </ToggleButton>
+            <Button className="m-1" onClick={() => setShowModal(true)}>Create</Button>
         </Navbar>
     </>;
 }

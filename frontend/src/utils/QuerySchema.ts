@@ -21,13 +21,12 @@ export enum QueryOrderBy {
     Body = "body",
 }
 export enum QueryOrder {
-    Ascend = "asc",
-    Descend = "desc"
+    OlderFirst = "asc",
+    NewerFirst = "desc"
 }
 
 export type QuerySchema = {
     state?      : QueryState
     contain?    : string,
-    orderby?    : QueryOrderBy,
     order?      : QueryOrder,
 }

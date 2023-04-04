@@ -61,8 +61,7 @@ function GitHubClent(props : GitHubClientPropsType) {
     const [queryProps, setQueryProps] = useState({
         state       : QueryState.All,
         contain     : "",
-        orderby     : QueryOrderBy.CreateTime,
-        order       : QueryOrder.Ascend
+        order       : QueryOrder.NewerFirst
     } as QuerySchema);
 
     const [errorMsg,setErrorMsg] = useState("");
@@ -125,8 +124,7 @@ function GitHubClent(props : GitHubClientPropsType) {
         try {
             const query_state     = query.state   !== undefined ? query.state   : QueryState.All;
             const query_contain   = query.contain !== undefined ? query.contain : "";
-            const query_orderby   = query.orderby !== undefined ? query.orderby : QueryOrderBy.CreateTime;
-            const query_order     = query.order   !== undefined ? query.order   : QueryOrder.Descend;
+            const query_order     = query.order   !== undefined ? query.order   : QueryOrder.NewerFirst;
             
             // console.log(query_state,queryProps.state)
             console.log(`Change task state from ${queryProps.state} to ${query_state}`)
@@ -137,13 +135,11 @@ function GitHubClent(props : GitHubClientPropsType) {
             // console.log(query_orderby , queryProps.orderby) //
             const QueryNotChanged = query_state === queryProps.state &&
                                     query_contain === queryProps.contain &&
-                                    query_order === queryProps.order &&
-                                    query_orderby === queryProps.orderby
+                                    query_order === queryProps.order
 
             const fullQuery : QuerySchema = {
                 state       : query_state,
                 contain     : query_contain,
-                orderby     : query_orderby,
                 order       : query_order,
             }
 
@@ -175,7 +171,6 @@ function GitHubClent(props : GitHubClientPropsType) {
             
             const query_state     = queryProps.state   ;
             const query_contain   = queryProps.contain ;
-            const query_orderby   = queryProps.orderby ;
             const query_order     = queryProps.order   ;
             // clientSetQueryProp(query)
             
@@ -200,7 +195,6 @@ function GitHubClent(props : GitHubClientPropsType) {
                     contain    : query_contain,
                     pagesize   : PAGE_SIZE,
                     page       : page,
-                    orderby    : query_orderby,
                     order      : query_order,
                 }
             });
