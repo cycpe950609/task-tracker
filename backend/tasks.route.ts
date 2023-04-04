@@ -163,28 +163,15 @@ taskRoute.post("/create",async (req,res)=>{
 
     const createUri = `${GITHUB_CREATE_ISSUE_URL}?${qstring}`
     const url = GITHUB_CREATE_ISSUE_URL;
-    const options = {
-        method: 'POST',
+
+    const rtv = await axios.post(GITHUB_CREATE_ISSUE_URL, JSON.stringify(createOption),{
         headers : {
             "Accept" : "application/vnd.github+json",
             "Authorization" : `Bearer ${token}`,
             "X-GitHub-Api-Version" : "2022-11-28",
             'Content-Type':'application/x-www-form-urlencoded'
         },
-        data: JSON.stringify(createOption),
-        url,
-    };
-    const rtv = axios(options);
-
-    // const rtv = await axios.post(GITHUB_CREATE_ISSUE_URL,{
-    //     headers : {
-    //         "Accept" : "application/vnd.github+json",
-    //         "Authorization" : `Bearer ${token}`,
-    //         "X-GitHub-Api-Version" : "2022-11-28",
-    //         'Content-Type':'application/x-www-form-urlencoded'
-    //     },
-    //     data : qstring
-    // })
+    })
 
     // console.log(rtv)
     
@@ -198,9 +185,31 @@ taskRoute.patch("/update",async (req,res)=>{
 })
 
 taskRoute.delete("/delete",async (req,res)=>{
-    console.log(req.body.data);
     
-    return res.send("delete")
+    const GITHUB_DELETE_ISSUE_URL = `https://api.github.com/repos/${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}/issues`
+
+    // console.log(req);
+
+    const {token,id} = req.body;
+
+    if(token == undefined)
+        return res.status(401).send("")
+    
+    const deleteUrl = `${GITHUB_DELETE_ISSUE_URL}/${id}`
+    // console.log(deleteUrl)
+
+    const rtv = await axios.patch(deleteUrl, JSON.stringify({"state": "closed"}),{
+        headers : {
+            "Accept" : "application/vnd.github+json",
+            "Authorization" : `Bearer ${token}`,
+            "X-GitHub-Api-Version" : "2022-11-28",
+            'Content-Type':'application/x-www-form-urlencoded'
+        },
+    })
+
+    // console.log(rtv)
+    
+    return res.send("delete success")
 })
 
 

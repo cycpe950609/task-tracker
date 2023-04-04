@@ -13,14 +13,18 @@ type ModalPropsType = {
     id : number,
     close : () => void,
 }
-function DeletingModal(props:ModalPropsType) {
+
+type DeletingModalPropsType = ModalPropsType
+                            & {issueNum : number}
+
+function DeletingModal(props:DeletingModalPropsType) {
     const githubClient = useGitHub();
     return <>
         <Modal show onHide={props.close}>
             <Modal.Header closeButton>
                 <Modal.Title>Deleting</Modal.Title>
             </Modal.Header>
-                <Modal.Body>Do you want to delete Task #{props.id}</Modal.Body>
+                <Modal.Body>Do you want to delete Task #{props.issueNum}</Modal.Body>
                 <Modal.Footer>
                 <Button variant="success" onClick={props.close}>
                     Cancel
@@ -260,7 +264,7 @@ function TaskList(props : TaskListPropsType) {
         }
 
         const btnDeleteClick = (deleteId:number) => {
-            console.log(`Delete ${deleteId}`);
+            console.log(`Delete ${index}`);
             setModalType("deleting");
             setEditingID(deleteId);
             setShowModal(true);
@@ -339,7 +343,7 @@ function TaskList(props : TaskListPropsType) {
                     // </div>
                 )}
             </InfiniteLoader>
-            {(modalType === "deleting") && <DeletingModal id={editingID} close={closeModal}></DeletingModal>}
+            {(modalType === "deleting") && <DeletingModal id={editingID} issueNum={githubClient.GetTask(editingID).index} close={closeModal}></DeletingModal>}
             {(modalType === "editing") && <EditingModal  id={editingID} close={closeModal} task={githubClient.GetTask(editingID)} update={(newValue)=> githubClient.SetTask(editingID,newValue)}></EditingModal>}
         </div>
     );

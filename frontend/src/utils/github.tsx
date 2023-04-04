@@ -288,6 +288,8 @@ function GitHubClent(props : GitHubClientPropsType) {
             const deleteAddress = `${props.backend_address}/api/task/delete`;
             const page = Math.floor(index / PAGE_SIZE);// + (index % PAGE_SIZE !== 0 ? 1 : 0);
             if(!(page in taskList))
+                processError("Page is not exist");
+            if(taskList[page].list.length < index % PAGE_SIZE)
                 processError("Task is not exist");
 
             // `/api/task/delete` : {
@@ -299,11 +301,15 @@ function GitHubClent(props : GitHubClientPropsType) {
                     "Content-Type": "application/json"
                 },
                 data: {
-                    id          : index,
+                    token       : authToken.access_token,
+                    id          : taskList[page].list[index % PAGE_SIZE].index,
                 }
             });
+            console.log(`Deleting ${taskList[page].list[index % PAGE_SIZE].index}`)
             console.log("delete result : ", data);
+            clearTaskList() // Force update
         } catch (error) {
+            console.log(error)
             processError("Something error when delete task, try to login again")
         }
     };
