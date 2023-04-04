@@ -7,6 +7,7 @@ import { useGitHub } from "../../utils/github";
 import { parseJsonConfigFileContent } from "typescript";
 import { TaskEntryType } from "@my-issue-tracker/backend/taskType";
 import {filterStateType, QueryState} from "../../utils/QuerySchema";
+import { useNavigate } from "react-router-dom";
 
 type ModalPropsType = {
     id : number,
@@ -208,6 +209,7 @@ function TaskList(props : TaskListPropsType) {
     const githubClient = useGitHub();
 
     // console.log("Rerender TaskList")
+    const navigate = useNavigate();
 
     const hasNextPage = () => { console.log("githubClient.PageCount",githubClient.PageCount); return githubClient.TotalPageCount > githubClient.PageCount};
 
@@ -215,7 +217,12 @@ function TaskList(props : TaskListPropsType) {
     const loadNextPage : (params : IndexRange) => Promise<boolean> = async (params: IndexRange) => {
         console.log("loadNextPage",params.startIndex,params.stopIndex)
         setIsLoadNextPage(true);
-        await githubClient.QueryTask(githubClient.PageCount);
+        try {
+            await githubClient.QueryTask(githubClient.PageCount);
+        } catch (error) {
+            console.log(error)
+            navigate("/")
+        }
         setIsLoadNextPage(false);
         return true;
     };
@@ -300,7 +307,7 @@ function TaskList(props : TaskListPropsType) {
             <InfiniteLoader
                 isRowLoaded={({index}) => {
                     // console.log(`isRowLoaded ${index}`)
-                    const {state} = githubClient.GetTask(index); 
+                    const {state} = githubClient.GetTask(index);
                     const isLoaded = (state as filterStateType != filterStateType.loaded) && (state as filterStateType != filterStateType.error)
                     console.log(`isRowLoaded ${index} : ${isLoaded}`)
                     return isLoaded;

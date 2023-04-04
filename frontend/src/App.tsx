@@ -23,8 +23,8 @@ function App() {
                 {/* prettier-ignore */}
                 <BrowserRouter>
                     <Routes>
-                        <Route path="/" element={<LoginPage/>}/>{/* Move validation to standalone page */}
-                        <Route path="/authed" element={<LoginPage/>}/>{/* Get token */}
+                        <Route path="/" element={<LoginPage><span>Login in 2 seconds...</span></LoginPage>}/>{/* Move validation to standalone page */}
+                        <Route path="/authed" element={<LoginPage><span>Process login...</span></LoginPage>}/>{/* Get token */}
                         <Route path="/tasks" element={<TasksPage/>}/>{/* List issues */}
                     </Routes>
                 </BrowserRouter>

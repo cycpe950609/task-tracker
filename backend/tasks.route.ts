@@ -12,7 +12,7 @@ const taskRoute = Router()
 const ISSUE_TRACKER_USERNAME = process.env.ISSUE_TRACKER_USERNAME
 const ISSUE_TRACKER_REPO_NAME = process.env.ISSUE_TRACKER_REPO_NAME;
 
-taskRoute.post("/select",async (req,res)=>{
+taskRoute.post("/select",async (req,res,next)=>{
 
     const GITHUB_LIST_ISSUE_URL = `https://api.github.com/repos/${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}/issues`
 
@@ -20,6 +20,9 @@ taskRoute.post("/select",async (req,res)=>{
     console.log(req.body.data);
     console.log("=============================================================")
     const {token,state: _state,_contain,_pagesize,query_page,_orderby} = req.body.data;
+
+    if(token == undefined)
+        return res.status(401).send("")
 
     console.log(`query_state : ${_state}`);
     const query_state     = _state   !== undefined ? _state   : QueryState.All;
@@ -115,6 +118,9 @@ taskRoute.post("/select",async (req,res)=>{
     console.log(list)
 
     console.log("===========================FINISH SELECT===========================")
+
+    if(list.length == 0)
+        return res.status(204).send("")
 
     return res.send(JSON.stringify(list));
 })
