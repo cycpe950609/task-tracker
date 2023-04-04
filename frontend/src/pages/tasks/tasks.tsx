@@ -371,6 +371,7 @@ function TaskList(props : TaskListPropsType) {
                                 ref={registerChild}
                                 onRowsRendered={onRowsRendered}
                                 rowRenderer={render} rowHeight={60} height={height} rowCount={githubClient.TaskCount} width={width}          
+                                noRowsRenderer={() =><div className="text-center d-flex flex-column justify-content-center h-100"><span>The List is empty.</span></div> }
                                 />)
                             }
                         </AutoSizer>

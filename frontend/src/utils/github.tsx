@@ -184,7 +184,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             //     orderby    : ['title','createtime','body']
             //     order      : ['desc','asc']
             // }
-            const {data} = await axios.post(selectAddress,{
+            const {data,status} = await axios.post(selectAddress,{
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json"
@@ -198,9 +198,8 @@ function GitHubClent(props : GitHubClientPropsType) {
                     order      : query_order,
                 }
             });
+            console.log("select status : ", status);
             console.log("select result : ", data);
-
-            setTotalPageCount(Object.keys(taskList).length + (data.length < PAGE_SIZE ? 1 : 0))
 
             // const list = []
             if(data.length > 0){
@@ -209,6 +208,7 @@ function GitHubClent(props : GitHubClientPropsType) {
                 }
                 setTaskList(newList);
             }
+            setTotalPageCount(Object.keys(taskList).length + (data.length < PAGE_SIZE ? 0 : 1))
             setTaskCount(taskCount + data.length);
         } catch (error) {
             processError("Something error when query tasks, try to login again")
