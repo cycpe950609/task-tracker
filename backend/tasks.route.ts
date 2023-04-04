@@ -14,7 +14,7 @@ const ISSUE_TRACKER_REPO_NAME = process.env.ISSUE_TRACKER_REPO_NAME;
 
 taskRoute.post("/select",async (req,res,next)=>{
 
-    const GITHUB_LIST_ISSUE_URL = `https://api.github.com/repos/${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}/issues`
+    const GITHUB_LIST_ISSUE_URL = `https://api.github.com/search/issues`
 
     console.log("=============================================================")
     console.log(req.body.data);
@@ -50,15 +50,28 @@ taskRoute.post("/select",async (req,res,next)=>{
         }
     }
 
+    const qArgs = {
+        "is"        : "issue",
+        "in"        : "body",
+        "repo"      : `${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}`,
+        "state"     : "open",
+        "label"    : getQueryLabel(),
+    } as {[key:string]:string}
+    let qstring : string = `"${query_contain.replace(/"/g,'\\"')}" `;
+    Object.keys(qArgs).map((val)=>{
+        if(qArgs[val] !== undefined)
+            qstring += `${val}:${qArgs[val]} `
+    })
+    console.log(qstring)
     const queryOption = {
-        labels      : getQueryLabel(),
+        q           : qstring,
         per_page    : query_pagesize,
         page        : query_page
     }
-    const qstring = qs.stringify(queryOption,{ arrayFormat: 'comma' });
-    console.log(qstring)
+    const queryString = qs.stringify(queryOption,{ arrayFormat: 'comma' });
+    console.log(queryString)
 
-    const selectUri = `${GITHUB_LIST_ISSUE_URL}?${qstring}`
+    const selectUri = `${GITHUB_LIST_ISSUE_URL}?${queryString}`
 
     const rtv = await axios.get(selectUri,{
         headers : {
@@ -80,7 +93,7 @@ taskRoute.post("/select",async (req,res,next)=>{
     }
 
     const list : TaskEntryType[] = []
-    rtv.data.map((item: queryIssueType) => {
+    rtv.data.items.map((item: queryIssueType) => {
         // console.log(item.title,item.body)
 
         const getItemState = () => {
@@ -118,6 +131,7 @@ taskRoute.post("/select",async (req,res,next)=>{
     console.log(list)
 
     console.log("===========================FINISH SELECT===========================")
+    // return res.send("query success")
 
     if(list.length == 0)
         return res.status(204).send("")

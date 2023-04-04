@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { FormEvent, useState } from "react";
 import 'react-virtualized/styles.css';
 import { InfiniteLoader, List, AutoSizer } from "../../utils/virtualize";
 import { IndexRange, ListRowProps, ListRowRenderer } from "react-virtualized";
@@ -148,6 +148,10 @@ function NavigateBar(props : NavigateBarPropsType){
     const [filterState, setFilterState] = useState(filterStateType.all);
     const updateFilterState = (state:filterStateType) => {
         setFilterState(state);
+        updateQuery(state)
+    }
+
+    const updateQuery = (state : filterStateType = filterState) => {
         const newQuery = {...githubClient.QueryProp};
         switch(state){
             case filterStateType.all        : { newQuery.state = QueryState.All; break; }
@@ -156,10 +160,18 @@ function NavigateBar(props : NavigateBarPropsType){
             case filterStateType.done       : { newQuery.state = QueryState.Done; break; }
             default                         : { newQuery.state = QueryState.All; break; }
         }
+        newQuery.contain = containText;
         githubClient.SetQueryProp(newQuery)
     }
+    const searchSubmit = (e : FormEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        updateQuery()
+    };
 
     const [showModal,setShowModal] = useState(false);
+    const [containText,setContainText] = useState("");
+
     const templateTask : TaskEntryType = {
         index : 0,
         title : "New Task",
@@ -195,14 +207,16 @@ function NavigateBar(props : NavigateBarPropsType){
                     </Dropdown.Item>
                 </Dropdown.Menu>
             </DropdownButton>
-            <Form className="d-flex flex-grow-1 m-2">
+            <Form className="d-flex flex-grow-1 m-2" onSubmit={searchSubmit}>
                 <Form.Control
                 type="search"
-                placeholder="Search"
+                placeholder="Search in content of task"
                 className="me-2"
                 aria-label="Search"
+                value={containText}
+                onChange={(e) => setContainText(e.target.value)}
                 />
-                <Button>Search</Button>
+                <Button type="submit">Search</Button>
             </Form>
             <Button onClick={() => setShowModal(true)}>Create</Button>
         </Navbar>
