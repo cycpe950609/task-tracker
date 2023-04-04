@@ -69,7 +69,7 @@ function GitHubClent(props : GitHubClientPropsType) {
 
     const processError = (error: string) => {
         setErrorMsg(error);
-        processError(error);
+        throw new Error(error);
     }
 
     // console.log(taskList);
@@ -115,6 +115,12 @@ function GitHubClent(props : GitHubClientPropsType) {
         }
     }
 
+    const clearTaskList = () => {
+        setTaskList({});
+        setTaskCount(0)
+        setTotalPageCount(1)
+    }
+
     const clientSetQueryProp = async (query: QuerySchema) => {
         try {
             const query_state     = query.state   !== undefined ? query.state   : QueryState.All;
@@ -144,9 +150,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             if(!QueryNotChanged){
                 setQueryProps(fullQuery);
                 // console.log("Remove TaskList")
-                setTaskList({});
-                setTaskCount(0)
-                setTotalPageCount(1)
+                clearTaskList()
                 // await clientQueryTask(0);
             }
         } catch (error) {
@@ -155,12 +159,13 @@ function GitHubClent(props : GitHubClientPropsType) {
     }
 
     useEffect(() => {
-        const updateQuery =async () => {
+        const updateQuery = async () => {
             if(authToken.access_token !== undefined)
-                await clientQueryTask(0);
+                if(taskCount === 0)
+                    await clientQueryTask(0);
         }
         updateQuery()
-    },[queryProps])
+    },[queryProps,taskCount])
 
     const clientQueryTask = async (page : number) => {
         try {
@@ -307,6 +312,11 @@ function GitHubClent(props : GitHubClientPropsType) {
         try {
             const createAddress = `${props.backend_address}/api/task/create`;
 
+            console.log("newValue");
+            console.log(newValue);
+
+            if(newValue.title.length === 0)
+                processError("Title is required.")
             
             if(newValue.body.split(/\s+/).length < 30)
                 processError("Content too short. Must longer than 30 words.");
@@ -323,13 +333,16 @@ function GitHubClent(props : GitHubClientPropsType) {
                     "Content-Type": "application/json"
                 },
                 data: {
+                    token       : authToken.access_token,
                     title       : newValue.title,
                     state       : newValue.state,
                     body        : newValue.body,
                 }
             });
             console.log("create result : ", data);
+            clearTaskList(); // Force reload
         } catch (error) {
+            console.log(error);
             processError("Something error when create task, try to login again")
             
         }  

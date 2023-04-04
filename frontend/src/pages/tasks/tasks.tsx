@@ -56,7 +56,11 @@ function EditingModal(props:EditingModalPropsType) {
     const [alertText,setAlertText] = useState("");
 
     const updateTask = () => {
-
+        if(newTitle.length === 0){
+            setAlertText("Title is required.");
+            setShowAlert(true);
+            return;
+        }
         if(newBody.split(/\s+/).length < 30){
             setAlertText("Content too short. Must longer than 30 words.");
             setShowAlert(true);

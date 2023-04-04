@@ -19,7 +19,7 @@ taskRoute.post("/select",async (req,res,next)=>{
     console.log("=============================================================")
     console.log(req.body.data);
     console.log("=============================================================")
-    const {token,state: _state,_contain,_pagesize,query_page,_orderby} = req.body.data;
+    const {token,state: _state,contain: _contain,pagesize: _pagesize,page: query_page,orderby: _orderby} = req.body.data;
 
     if(token == undefined)
         return res.status(401).send("")
@@ -126,9 +126,69 @@ taskRoute.post("/select",async (req,res,next)=>{
 })
 
 taskRoute.post("/create",async (req,res)=>{
+
+    const GITHUB_CREATE_ISSUE_URL = `https://api.github.com/repos/${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}/issues`
+
     console.log(req.body.data);
+
+    const {token,state: _state,title: _title,body: _body} = req.body.data;
+
+    if(token == undefined)
+        return res.status(401).send("")
+    if(_title.length === 0)
+        res.status(400).send("Title is required.")
+    if(_body.split(/\s+/).length < 30)
+        res.status(400).send("Content too short. Must longer than 30 words.");
+
+    const getQueryLabel = (query_state : filterStateType) => {
+        switch(query_state){
+            case filterStateType.all            : { return [] };
+            case filterStateType.open           : { return [] };
+            case filterStateType.inprocess      : { return ["inprocess"] };
+            case filterStateType.done           : { return ["done"] };
+            default                             : { return [] };
+        }
+    }
+
+    const createOption = {
+        title       : _title,
+        body        : _body,
+        labels      : getQueryLabel(_state)
+    }
+
+    console.log(_state)
+    console.log(JSON.stringify(createOption))
+    const qstring = qs.stringify(createOption,{ arrayFormat: 'comma' });
+    console.log(qstring)
+
+    const createUri = `${GITHUB_CREATE_ISSUE_URL}?${qstring}`
+    const url = GITHUB_CREATE_ISSUE_URL;
+    const options = {
+        method: 'POST',
+        headers : {
+            "Accept" : "application/vnd.github+json",
+            "Authorization" : `Bearer ${token}`,
+            "X-GitHub-Api-Version" : "2022-11-28",
+            'Content-Type':'application/x-www-form-urlencoded'
+        },
+        data: JSON.stringify(createOption),
+        url,
+    };
+    const rtv = axios(options);
+
+    // const rtv = await axios.post(GITHUB_CREATE_ISSUE_URL,{
+    //     headers : {
+    //         "Accept" : "application/vnd.github+json",
+    //         "Authorization" : `Bearer ${token}`,
+    //         "X-GitHub-Api-Version" : "2022-11-28",
+    //         'Content-Type':'application/x-www-form-urlencoded'
+    //     },
+    //     data : qstring
+    // })
+
+    // console.log(rtv)
     
-    return res.send("create")
+    return res.send("create success")
 })
 
 taskRoute.patch("/update",async (req,res)=>{
