@@ -6,6 +6,8 @@ const authRoute = Router()
 authRoute.post("/getToken",async (req,res)=>{
     // console.log(req.body.data);
     const code = req.body.data.code;
+    if(code === undefined)
+        return res.status(400).send("");
     // console.log("Get Code",code);
     console.log("Get Token invoked");
     // console.log(req.body);
