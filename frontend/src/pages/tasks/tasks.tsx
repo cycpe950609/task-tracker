@@ -181,15 +181,31 @@ function NavigateBar(props : NavigateBarPropsType){
         updateQuery(filterState,!isAsc);
     }
 
+    const createTask = (newValue: TaskEntryType) => {
+        githubClient.CreateTask(newValue)
+        setContainText("");
+    }
+
+    const getOrderText = () => {
+        return IsAsc ? "Newer first" : "Older first";
+    }
+
+    const getViewModeText = () => {
+        if(githubClient.QueryProp.contain !== undefined)
+            if(githubClient.QueryProp.contain.length > 0)
+                return `Search "${githubClient.QueryProp.contain}" with ${getOrderText().toLowerCase()}`
+        return `List all issues with ${getOrderText().toLowerCase()}`
+    }
+
     const templateTask : TaskEntryType = {
         index : 0,
         title : "New Task",
         body : "What do you want to do ?",
         state : filterStateType.open
     }
-    // TODO : Get total task count
+    
     return <>
-        {showModal && <EditingModal id={0} close={() => setShowModal(false)} task={templateTask} update={(newValue) => githubClient.CreateTask(newValue)} />}
+        {showModal && <EditingModal id={0} close={() => setShowModal(false)} task={templateTask} update={createTask} />}
         <Navbar bg="dark" className="p-2 nav-fill w-100" >
             <DropdownButton title={filterState} className="m-1">
                 <Dropdown.Menu>
@@ -236,10 +252,11 @@ function NavigateBar(props : NavigateBarPropsType){
                 value="1"
                 onChange={(e) => updateOrder(e.currentTarget.checked)}
             >
-                {IsAsc ? "Newer first" : "Older first" }
+                {getOrderText()}
             </ToggleButton>
             <Button className="m-1" onClick={() => setShowModal(true)}>Create</Button>
         </Navbar>
+        <span className="viewMode mx-2">{getViewModeText()}</span>
     </>;
 }
 

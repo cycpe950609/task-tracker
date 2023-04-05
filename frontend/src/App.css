@@ -2,3 +2,8 @@ body, #root {
     width: 100vw;
     height: 100vh;
 }
+
+
+.viewMode {
+    border-bottom: 1px black solid;
+}

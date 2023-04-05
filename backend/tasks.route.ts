@@ -12,9 +12,84 @@ const taskRoute = Router()
 const ISSUE_TRACKER_USERNAME = process.env.ISSUE_TRACKER_USERNAME
 const ISSUE_TRACKER_REPO_NAME = process.env.ISSUE_TRACKER_REPO_NAME;
 
-taskRoute.post("/select",async (req,res,next)=>{
+const getQueryLabel = (query_state: QueryState) => {
+    switch(query_state){
+        case QueryState.All         : { return undefined };
+        case QueryState.Open        : { return undefined };
+        case QueryState.InProcess   : { return "inprocess" };
+        case QueryState.Done        : { return "done" };
+        default                     : { return undefined };
+    }
+}
 
-    const GITHUB_LIST_ISSUE_URL = `https://api.github.com/search/issues`
+const ListIssues = async (token:string,state: QueryState,pageSize: number,page: number,order: QueryOrder) => {
+    const GITHUB_LIST_ISSUE_URL = `https://api.github.com/repos/${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}/issues`;
+
+    console.log("===========================LIST ISSUES===========================");
+    const queryOption = {
+        labels      : getQueryLabel(state),
+        per_page    : pageSize,
+        page        : page,
+        sort        : "created",
+        direction   : order
+    }
+    const qstring = qs.stringify(queryOption,{ arrayFormat: 'comma' });
+    console.log(qstring)
+
+    const selectUri = `${GITHUB_LIST_ISSUE_URL}?${qstring}`
+
+    const rtv = await axios.get(selectUri,{
+        headers : {
+            "Accept" : "application/vnd.github+json",
+            "Authorization" : `Bearer ${token}`,
+            "X-GitHub-Api-Version" : "2022-11-28"
+        }
+    })
+    console.log("=========================LIST ISSUES END=========================");
+    return rtv.data;
+}
+const SearchIssues = async (token:string,state: QueryState,pageSize: number,page: number,order: QueryOrder,contain: string) =>{
+    console.log("===========================SEARCH ISSUES===========================");
+    const GITHUB_SEARCH_ISSUE_URL = `https://api.github.com/search/issues`
+    const qArgs = {
+        "is"        : "issue",
+        "in"        : "body",
+        "repo"      : `${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}`,
+        "state"     : "open",
+        "label"    : getQueryLabel(state),
+
+    } as {[key:string]:string}
+    let qstring : string = `"${contain.replace(/"/g,'\\"')}" `;
+    Object.keys(qArgs).map((val)=>{
+        if(qArgs[val] !== undefined)
+            qstring += `${val}:${qArgs[val]} `
+    })
+    console.log(qstring)
+    const queryOption = {
+        q           : qstring,
+        per_page    : pageSize,
+        page        : page,
+        sort        : "created",
+        order       : order
+    }
+    const queryString = qs.stringify(queryOption,{ arrayFormat: 'comma' });
+    console.log(queryString)
+
+    const selectUri = `${GITHUB_SEARCH_ISSUE_URL}?${queryString}`
+    
+
+    const rtv = await axios.get(selectUri,{
+        headers : {
+            "Accept" : "application/vnd.github+json",
+            "Authorization" : `Bearer ${token}`,
+            "X-GitHub-Api-Version" : "2022-11-28"
+        }
+    })
+    console.log("=========================SEARCH ISSUES END=========================");
+    return rtv.data.items;
+}
+
+taskRoute.post("/select",async (req,res,next)=>{
 
     console.log("=============================================================")
     console.log(req.body.data);
@@ -30,15 +105,7 @@ taskRoute.post("/select",async (req,res,next)=>{
     const query_order     = _order !== undefined ? _order : QueryOrder.NewerFirst;
     console.log(`query_state : ${query_state} , query_order : ${query_order}`);
 
-    const getQueryLabel = () => {
-        switch(query_state){
-            case QueryState.All         : { return undefined };
-            case QueryState.Open        : { return undefined };
-            case QueryState.InProcess   : { return "inprocess" };
-            case QueryState.Done        : { return "done" };
-            default                     : { return undefined };
-        }
-    }
+    
 
     const QueryState2filterStateType = (state:QueryState) => {
         switch(state){
@@ -50,39 +117,8 @@ taskRoute.post("/select",async (req,res,next)=>{
         }
     }
 
-    const qArgs = {
-        "is"        : "issue",
-        "in"        : "body",
-        "repo"      : `${ISSUE_TRACKER_USERNAME}/${ISSUE_TRACKER_REPO_NAME}`,
-        "state"     : "open",
-        "label"    : getQueryLabel(),
-
-    } as {[key:string]:string}
-    let qstring : string = `"${query_contain.replace(/"/g,'\\"')}" `;
-    Object.keys(qArgs).map((val)=>{
-        if(qArgs[val] !== undefined)
-            qstring += `${val}:${qArgs[val]} `
-    })
-    console.log(qstring)
-    const queryOption = {
-        q           : qstring,
-        per_page    : query_pagesize,
-        page        : query_page,
-        sort        : "created",
-        order       : query_order
-    }
-    const queryString = qs.stringify(queryOption,{ arrayFormat: 'comma' });
-    console.log(queryString)
-
-    const selectUri = `${GITHUB_LIST_ISSUE_URL}?${queryString}`
-
-    const rtv = await axios.get(selectUri,{
-        headers : {
-            "Accept" : "application/vnd.github+json",
-            "Authorization" : `Bearer ${token}`,
-            "X-GitHub-Api-Version" : "2022-11-28"
-        }
-    })
+    const rtvLst = (query_contain.length > 0) ?     await SearchIssues(token,query_state,query_pagesize,query_page,query_order,query_contain) : 
+                                                    await ListIssues(token,query_state,query_pagesize,query_page,query_order)
     // console.log(rtv.data)
 
     type queryIssueType = { 
@@ -96,7 +132,7 @@ taskRoute.post("/select",async (req,res,next)=>{
     }
 
     const list : TaskEntryType[] = []
-    rtv.data.items.map((item: queryIssueType) => {
+    rtvLst.map((item: queryIssueType) => {
         // console.log(item.title,item.body)
 
         const getItemState = () => {

@@ -30,3 +30,9 @@ export type QuerySchema = {
     contain?    : string,
     order?      : QueryOrder,
 }
+
+export const defaultQueryProps : QuerySchema = {
+    state       : QueryState.All,
+    contain     : "",
+    order       : QueryOrder.NewerFirst
+};

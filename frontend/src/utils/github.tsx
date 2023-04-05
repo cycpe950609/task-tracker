@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import qs from "qs";
 import axios from "axios";
 import { TaskEntryType } from "@my-issue-tracker/backend/taskType"
-import { filterStateType, QueryOrder, QueryOrderBy, QuerySchema, QueryState } from "./QuerySchema";
+import { defaultQueryProps, filterStateType, QueryOrder, QueryOrderBy, QuerySchema, QueryState } from "./QuerySchema";
 
 export type AuthTokenType = {
     access_token: string;
@@ -58,11 +58,7 @@ function GitHubClent(props : GitHubClientPropsType) {
     const [totalPageCount,setTotalPageCount] = useState(1);
 
     const [srvQueryProps, setSrvQueryProps] = useState({start : 0 } as ServerQuerySchemaExtention);
-    const [queryProps, setQueryProps] = useState({
-        state       : QueryState.All,
-        contain     : "",
-        order       : QueryOrder.NewerFirst
-    } as QuerySchema);
+    const [queryProps, setQueryProps] = useState(defaultQueryProps);
 
     const [errorMsg,setErrorMsg] = useState("");
 
