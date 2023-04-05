@@ -3,7 +3,7 @@ import { query, Router } from "express";
 import qs from "qs";
 import axios from "axios";
 import { TaskEntryType } from "./taskType";
-import { filterStateType, QueryOrder, QueryOrderBy, QueryState } from "@my-issue-tracker/frontend/src/utils/QuerySchema"
+import { filterStateType, QueryOrder, QueryState } from "@my-issue-tracker/frontend/src/utils/QuerySchema"
 
 config()//dotnev
 
@@ -151,7 +151,7 @@ taskRoute.post("/select",async (req,res,next)=>{
                     return filterStateType.inprocess;
                 return filterStateType.open;
             }
-            return filterStateType.deleted
+            return filterStateType.error;
         }
         // if(getItemState() === state || state === filterStateType.all)
         if(getItemState() == QueryState2filterStateType(query_state) || query_state == QueryState.All)
@@ -162,15 +162,10 @@ taskRoute.post("/select",async (req,res,next)=>{
                 state : getItemState()
             } as TaskEntryType)
     });
-    // const listLength = list.length
-    // for (let idx = 0; idx < 10 - listLength - 1; idx++) {
-    //     list.push({ title : `Query ${idx} title`, body: `Query body`, state : filterStateType.open } as TaskEntryType)
-    // }
-    // console.log("Current Queue : ",page)
+
     console.log(list)
 
     console.log("===========================FINISH SELECT===========================")
-    // return res.send("query success")
 
     if(list.length == 0)
         return res.status(204).send("")
@@ -220,8 +215,6 @@ taskRoute.post("/create",async (req,res)=>{
 
     console.log(createOption)
 
-    // console.log(rtv)
-    
     return res.send("create success")
 })
 
@@ -266,7 +259,6 @@ taskRoute.patch("/update",async (req,res)=>{
         },
     })
 
-    // console.log(rtv)
     return res.send("update")
 })
 
@@ -293,8 +285,6 @@ taskRoute.delete("/delete",async (req,res)=>{
         },
     })
 
-    // console.log(rtv)
-    
     return res.send("delete success")
 })
 

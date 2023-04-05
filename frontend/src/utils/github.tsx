@@ -1,8 +1,8 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import qs from "qs";
 import axios from "axios";
 import { TaskEntryType } from "@my-issue-tracker/backend/taskType"
-import { defaultQueryProps, filterStateType, QueryOrder, QueryOrderBy, QuerySchema, QueryState } from "./QuerySchema";
+import { defaultQueryProps, filterStateType, QueryOrder, QuerySchema, QueryState } from "./QuerySchema";
 
 export type AuthTokenType = {
     access_token: string;
@@ -34,13 +34,6 @@ export type GitHubClientPropsType = {
     children    : React.ReactNode
 }
 
-type ServerQuerySchemaExtention = {
-    start       : number,
-    end?        : number,
-};
-
-type ServerQuerySchema = QuerySchema & ServerQuerySchemaExtention;
-
 type TaskPageType = {
     list : TaskEntryType[]
 }
@@ -56,7 +49,6 @@ function GitHubClent(props : GitHubClientPropsType) {
     const [taskCount,setTaskCount] = useState(0);
     const [totalPageCount,setTotalPageCount] = useState(1);
 
-    const [srvQueryProps, setSrvQueryProps] = useState({start : 0 } as ServerQuerySchemaExtention);
     const [queryProps, setQueryProps] = useState(defaultQueryProps);
 
     const [errorMsg,setErrorMsg] = useState("");
@@ -83,7 +75,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             const qstring = qs.stringify(queryOption,{ arrayFormat: 'comma' });
         
             const loginUri = `${GITHUB_AUTH_URL}?${qstring}`
-            console.log(loginUri);
+            // console.log(loginUri);
             window.location.href = loginUri;
         } catch (error) {
             processError("Something error when logining, try to login again")
@@ -103,7 +95,7 @@ function GitHubClent(props : GitHubClientPropsType) {
                     code : code
                 }
             });
-            console.log("getAuthToken", data);
+            // console.log("getAuthToken", data);
             setAuthToken(data);
             return;
         } catch (error) {
@@ -125,7 +117,7 @@ function GitHubClent(props : GitHubClientPropsType) {
             const query_order     = query.order   !== undefined ? query.order   : QueryOrder.NewerFirst;
             
             // console.log(query_state,queryProps.state)
-            console.log(`Change task state from ${queryProps.state} to ${query_state}`)
+            // console.log(`Change task state from ${queryProps.state} to ${query_state}`)
             
             // console.log(query_state , queryProps.state) // &&
             // console.log(query_contain , queryProps.contain) // &&
@@ -152,21 +144,14 @@ function GitHubClent(props : GitHubClientPropsType) {
         }
     }
 
-    useEffect(() => {
-        const updateQuery = async () => {
-            if(authToken.access_token !== undefined)
-                if(taskCount === 0)
-                    await clientQueryTask(0,10);
-        }
-        updateQuery()
-    },[queryProps,taskCount])
+    
 
     const clientQueryTask = async (startIndex: number, endIndex: number) => {
         try {
             const selectAddress = `${props.backend_address}/api/task/select`;
             // TODO : validate
             const page = startIndex / PAGE_SIZE
-            console.log(`Query page ${page} with schema`,queryProps);
+            // console.log(`Query page ${page} with schema`,queryProps);
             
             const query_state     = queryProps.state   ;
             const query_contain   = queryProps.contain ;
@@ -197,8 +182,8 @@ function GitHubClent(props : GitHubClientPropsType) {
                     order      : query_order,
                 }
             });
-            console.log("select status : ", status);
-            console.log("select result : ", data);
+            // console.log("select status : ", status);
+            // console.log("select result : ", data);
 
             // const list = []
             if(data.length > 0){
@@ -215,6 +200,15 @@ function GitHubClent(props : GitHubClientPropsType) {
             processError("Something error when query tasks, try to login again")
         }
     }
+
+    useEffect(() => {
+        const updateQuery = async () => {
+            if(authToken.access_token !== undefined)
+                if(taskCount === 0)
+                    await clientQueryTask(0,10);
+        }
+        updateQuery()
+    },[queryProps,taskCount,authToken.access_token])
 
     const clientGetTask = (index : number) : TaskEntryType => {
         //TODO : check if task loaded
@@ -241,12 +235,12 @@ function GitHubClent(props : GitHubClientPropsType) {
     const clientSetTask  = async (index : number, newValue : TaskEntryType) => {
         try {
             const setAddress = `${props.backend_address}/api/task/update`;
-            console.log(`Set task ${index}`);
+            // console.log(`Set task ${index}`);
             const page = Math.floor(index / PAGE_SIZE);// + (index % PAGE_SIZE !== 0 ? 1 : 0);
             if(!(page in taskList))
                 processError("Task is not exist");
             
-            if(newValue.body.split(/\s+/).length < 30)
+            if(newValue.body.split(/\s+/).length <= 30)
                 processError("Content too short. Must longer than 30 words.");
                 
 
@@ -273,7 +267,7 @@ function GitHubClent(props : GitHubClientPropsType) {
                     body        : newValue.body,
                 }
             });
-            console.log("update result : ", data);
+            // console.log("update result : ", data);
             clearTaskList(); // Force update
         } catch (error) {
             processError("Something error when update task, try to login again")
@@ -302,11 +296,11 @@ function GitHubClent(props : GitHubClientPropsType) {
                     id          : taskList[page].list[index % PAGE_SIZE].index,
                 }
             });
-            console.log(`Deleting ${taskList[page].list[index % PAGE_SIZE].index}`)
-            console.log("delete result : ", data);
+            // console.log(`Deleting ${taskList[page].list[index % PAGE_SIZE].index}`)
+            // console.log("delete result : ", data);
             clearTaskList() // Force update
         } catch (error) {
-            console.log(error)
+            // console.log(error)
             processError("Something error when delete task, try to login again")
         }
     };
@@ -315,13 +309,13 @@ function GitHubClent(props : GitHubClientPropsType) {
         try {
             const createAddress = `${props.backend_address}/api/task/create`;
 
-            console.log("newValue");
-            console.log(newValue);
+            // console.log("newValue");
+            // console.log(newValue);
 
             if(newValue.title.length === 0)
                 processError("Title is required.")
             
-            if(newValue.body.split(/\s+/).length < 30)
+            if(newValue.body.split(/\s+/).length <= 30)
                 processError("Content too short. Must longer than 30 words.");
                 
             // `/api/task/create` : {
@@ -342,16 +336,16 @@ function GitHubClent(props : GitHubClientPropsType) {
                     body        : newValue.body,
                 }
             });
-            console.log("create result : ", data);
+            // console.log("create result : ", data);
             clearTaskList(); // Force reload
         } catch (error) {
-            console.log(error);
+            // console.log(error);
             processError("Something error when create task, try to login again")
             
         }  
     }
 
-    console.log("canLoadMoreData" , canLoadMoreData)
+    // console.log("canLoadMoreData" , canLoadMoreData)
     return <>
         <GitHubClientContext.Provider value={{
             // Auth

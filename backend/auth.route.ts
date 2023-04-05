@@ -9,7 +9,7 @@ authRoute.post("/getToken",async (req,res)=>{
     if(code === undefined)
         return res.status(400).send("");
     // console.log("Get Code",code);
-    console.log("Get Token invoked");
+    // console.log("Get Token invoked");
     // console.log(req.body);
     // console.log(res)
     // console.log("client_id" , process.env.GITHUB_CLIENT_ID)
@@ -23,11 +23,11 @@ authRoute.post("/getToken",async (req,res)=>{
     };
     const qstring = qs.stringify(queryOption);
     const tokenUrl = `${authUrl}?${qstring}`
-    console.log(tokenUrl);
+    // console.log(tokenUrl);
     const {data} = await axios.post(tokenUrl);
     const rtv = qs.parse(data);
 
-    console.log(rtv);
+    // console.log(rtv);
     // return res.send("getToken")
     return res.send(rtv)
 })

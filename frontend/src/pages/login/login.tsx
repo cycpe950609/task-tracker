@@ -1,8 +1,6 @@
 import React, { useEffect } from "react";
-import Button from "react-bootstrap/Button";
-import { propTypes } from "react-bootstrap/esm/Image";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AuthTokenType, useGitHub } from "../../utils/github";
+import { useGitHub } from "../../utils/github";
 
 export type ProcessPageProps = {
     children? : React.ReactNode
@@ -47,7 +45,7 @@ export function AuthPage(){
     const [currentUrlParams,setCurrentUrlParams] = useSearchParams();
     const navigate = useNavigate();
     const githubClient = useGitHub();
-    console.log(currentUrlParams);
+    // console.log(currentUrlParams);
     useEffect(()=>{
         if (currentUrlParams.has("code")) {
             // Loginned

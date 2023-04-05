@@ -5,7 +5,6 @@ export enum filterStateType  {
     all = "All",
     error = "Error",
     loaded = "Loaded",
-    deleted = "Deleted",
 }
 
 export enum QueryState {
@@ -13,12 +12,6 @@ export enum QueryState {
     Open = "open",
     InProcess = "inprocess",
     Done = "done",
-    Deleted = "deleted"
-}
-export enum QueryOrderBy {
-    Title = "title",
-    CreateTime = "createtime",
-    Body = "body",
 }
 export enum QueryOrder {
     OlderFirst = "asc",

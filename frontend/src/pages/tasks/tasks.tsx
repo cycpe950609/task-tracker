@@ -2,11 +2,10 @@ import React, { FormEvent, useState } from "react";
 import 'react-virtualized/styles.css';
 import { InfiniteLoader, List, AutoSizer } from "../../utils/virtualize";
 import { IndexRange, ListRowProps, ListRowRenderer } from "react-virtualized";
-import { Container,  Dropdown, Navbar, Form, Button, DropdownButton, Modal, Alert, Badge, Stack, ToggleButton } from "react-bootstrap";
+import { Dropdown, Navbar, Form, Button, DropdownButton, Modal, Alert, Badge, Stack, ToggleButton } from "react-bootstrap";
 import { useGitHub } from "../../utils/github";
-import { parseJsonConfigFileContent } from "typescript";
 import { TaskEntryType } from "@my-issue-tracker/backend/taskType";
-import {filterStateType, QueryOrder, QueryState} from "../../utils/QuerySchema";
+import { filterStateType, QueryOrder, QueryState } from "../../utils/QuerySchema";
 import { useNavigate } from "react-router-dom";
 
 type ModalPropsType = {
@@ -65,7 +64,7 @@ function EditingModal(props:EditingModalPropsType) {
             setShowAlert(true);
             return;
         }
-        if(newBody.split(/\s+/).length < 30){
+        if(newBody.split(/\s+/).length <= 30){
             setAlertText("Content too short. Must longer than 30 words.");
             setShowAlert(true);
             return;
@@ -128,11 +127,10 @@ function EditingModal(props:EditingModalPropsType) {
 
 function TasksPage(){
     return <>
-    <div className="d-flex flex-column h-100">
-        <NavigateBar/>
-        <TaskList/>
-    </div>
-        
+        <div className="d-flex flex-column h-100">
+            <NavigateBar/>
+            <TaskList/>
+        </div>
     </>
 }
 
@@ -270,19 +268,14 @@ function TaskList(props : TaskListPropsType) {
     // console.log("Rerender TaskList")
     const navigate = useNavigate();
 
-    const hasNextPage = () => { console.log("githubClient.PageCount",githubClient.PageCount); return githubClient.TotalPageCount > githubClient.PageCount};
-
-    const [isLoadNextPage , setIsLoadNextPage] = useState(false);
     const loadNextPage : (params : IndexRange) => Promise<boolean> = async (params: IndexRange) => {
-        console.log("loadNextPage",params.startIndex,params.stopIndex)
-        setIsLoadNextPage(true);
+        // console.log("loadNextPage",params.startIndex,params.stopIndex)
         try {
             await githubClient.QueryTask(params.startIndex,params.stopIndex);
         } catch (error) {
-            console.log(error)
+            // console.log(error)
             navigate("/")
         }
-        setIsLoadNextPage(false);
         return true;
     };
 
@@ -303,7 +296,7 @@ function TaskList(props : TaskListPropsType) {
         const { index, title, body, state} = githubClient.GetTask(props.index);
         const showTitleText = title.length > TITLE_SHOW_MAX_LENGTH ? title.slice(0,TITLE_SHOW_MAX_LENGTH - 3) + "..." : title;
         const showBodyText = body.length > BODY_SHOW_MAX_LENGTH ? body.slice(0,BODY_SHOW_MAX_LENGTH - 3) + "..." : body;
-        const isLoaded = (state as filterStateType != filterStateType.loaded) && (state as filterStateType != filterStateType.error)
+        const isLoaded = (state as filterStateType !== filterStateType.loaded) && (state as filterStateType !== filterStateType.error)
 
         const StateViewer = (props : { state : filterStateType}) => {
             switch(props.state){
@@ -315,14 +308,14 @@ function TaskList(props : TaskListPropsType) {
         }
 
         const btnDeleteClick = (deleteId:number) => {
-            console.log(`Delete ${index}`);
+            // console.log(`Delete ${index}`);
             setModalType("deleting");
             setEditingID(deleteId);
             setShowModal(true);
         }
 
         const btnEditClick = (editId:number) => {
-            console.log(`Edit ${editId}`);
+            // console.log(`Edit ${editId}`);
             setModalType("editing");
             setEditingID(editId);
             setShowModal(true);
@@ -359,7 +352,7 @@ function TaskList(props : TaskListPropsType) {
         setEditingID(-1);  
     }
 
-    console.log(`TaskCount : ${githubClient.TotalTaskCount}`)
+    // console.log(`TaskCount : ${githubClient.TotalTaskCount}`)
 
     return (
         <div className="p-2 w-100 h-100" style={{flex: "1 1 auto"}}>
@@ -367,7 +360,7 @@ function TaskList(props : TaskListPropsType) {
                 isRowLoaded={({index}) => {
                     // console.log(`isRowLoaded ${index}`)
                     const {state} = githubClient.GetTask(index);
-                    const isLoaded = (state as filterStateType != filterStateType.loaded) && (state as filterStateType != filterStateType.error)
+                    const isLoaded = (state as filterStateType !== filterStateType.loaded) && (state as filterStateType !== filterStateType.error)
                     // console.log(`isRowLoaded ${index} : ${isLoaded}`)
                     return isLoaded;
                 } }
