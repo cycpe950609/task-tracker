@@ -12,7 +12,7 @@ export type AuthTokenType = {
 type GitHubClientContextType = {
     Login : () => void,// Login GitHub to get 'code'
     GetAccessToken : (code : string) => Promise<void>, // Use previous 'code' to get access token
-    QueryTask : (page : number) => Promise<void>, // Query a page of task and stored in context,
+    QueryTask : (startIndex : number,endIndex: number) => Promise<void>, // Query a page of task and stored in context,
     QueryProp : QuerySchema, // Current Query task 
     SetQueryProp : (query : QuerySchema) => void,
     TaskCount : number, // Total Loaded Tasks
@@ -31,7 +31,6 @@ export const useGitHub = () => useContext(GitHubClientContext)
 export type GitHubClientPropsType = {
     client_id   : string,
     backend_address : string,
-    queryPageSize?   : number,
     children    : React.ReactNode
 }
 
@@ -49,7 +48,7 @@ type TaskListType = {[pageIdx:number]:TaskPageType};
 
 function GitHubClent(props : GitHubClientPropsType) {
 
-    const PAGE_SIZE = props.queryPageSize !== undefined ? props.queryPageSize : 10;
+    const PAGE_SIZE = 10;
 
     const [authToken, setAuthToken] = useState({} as AuthTokenType);
 
@@ -61,6 +60,8 @@ function GitHubClent(props : GitHubClientPropsType) {
     const [queryProps, setQueryProps] = useState(defaultQueryProps);
 
     const [errorMsg,setErrorMsg] = useState("");
+
+    const [canLoadMoreData,setCanLoadMoreData] = useState(true);
 
     const processError = (error: string) => {
         setErrorMsg(error);
@@ -112,8 +113,9 @@ function GitHubClent(props : GitHubClientPropsType) {
 
     const clearTaskList = () => {
         setTaskList({});
-        setTaskCount(0)
-        setTotalPageCount(1)
+        setTaskCount(0);
+        setTotalPageCount(1);
+        setCanLoadMoreData(true);
     }
 
     const clientSetQueryProp = async (query: QuerySchema) => {
@@ -154,15 +156,16 @@ function GitHubClent(props : GitHubClientPropsType) {
         const updateQuery = async () => {
             if(authToken.access_token !== undefined)
                 if(taskCount === 0)
-                    await clientQueryTask(0);
+                    await clientQueryTask(0,10);
         }
         updateQuery()
     },[queryProps,taskCount])
 
-    const clientQueryTask = async (page : number) => {
+    const clientQueryTask = async (startIndex: number, endIndex: number) => {
         try {
             const selectAddress = `${props.backend_address}/api/task/select`;
             // TODO : validate
+            const page = startIndex / PAGE_SIZE
             console.log(`Query page ${page} with schema`,queryProps);
             
             const query_state     = queryProps.state   ;
@@ -190,7 +193,7 @@ function GitHubClent(props : GitHubClientPropsType) {
                     state      : query_state,
                     contain    : query_contain,
                     pagesize   : PAGE_SIZE,
-                    page       : page,
+                    page       : page + 1,
                     order      : query_order,
                 }
             });
@@ -204,6 +207,8 @@ function GitHubClent(props : GitHubClientPropsType) {
                 }
                 setTaskList(newList);
             }
+            if(data.length < PAGE_SIZE)//Last page
+                setCanLoadMoreData(false);
             setTotalPageCount(Object.keys(taskList).length + (data.length < PAGE_SIZE ? 0 : 1))
             setTaskCount(taskCount + data.length);
         } catch (error) {
@@ -346,8 +351,7 @@ function GitHubClent(props : GitHubClientPropsType) {
         }  
     }
 
-    const canLoadMoreData =  Object.keys(taskList).length < totalPageCount;
-
+    console.log("canLoadMoreData" , canLoadMoreData)
     return <>
         <GitHubClientContext.Provider value={{
             // Auth
@@ -358,8 +362,8 @@ function GitHubClent(props : GitHubClientPropsType) {
             QueryTask : clientQueryTask,
             QueryProp : queryProps,
             SetQueryProp : clientSetQueryProp,
-            TaskCount : taskCount + (canLoadMoreData ? 1 : 0) ,
-            TotalTaskCount : totalPageCount,
+            TaskCount : taskCount  ,
+            TotalTaskCount : taskCount + (canLoadMoreData ? 1 : 0),
             PageCount : Object.keys(taskList).length,//TODO support partial load
             TotalPageCount : totalPageCount,
             // Single task manager

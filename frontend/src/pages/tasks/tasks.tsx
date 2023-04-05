@@ -277,7 +277,7 @@ function TaskList(props : TaskListPropsType) {
         console.log("loadNextPage",params.startIndex,params.stopIndex)
         setIsLoadNextPage(true);
         try {
-            await githubClient.QueryTask(githubClient.PageCount);
+            await githubClient.QueryTask(params.startIndex,params.stopIndex);
         } catch (error) {
             console.log(error)
             navigate("/")
@@ -359,7 +359,7 @@ function TaskList(props : TaskListPropsType) {
         setEditingID(-1);  
     }
 
-    console.log(`TaskCount : ${githubClient.TaskCount}`)
+    console.log(`TaskCount : ${githubClient.TotalTaskCount}`)
 
     return (
         <div className="p-2 w-100 h-100" style={{flex: "1 1 auto"}}>
@@ -368,16 +368,16 @@ function TaskList(props : TaskListPropsType) {
                     // console.log(`isRowLoaded ${index}`)
                     const {state} = githubClient.GetTask(index);
                     const isLoaded = (state as filterStateType != filterStateType.loaded) && (state as filterStateType != filterStateType.error)
-                    console.log(`isRowLoaded ${index} : ${isLoaded}`)
+                    // console.log(`isRowLoaded ${index} : ${isLoaded}`)
                     return isLoaded;
                 } }
                 loadMoreRows={
-                isLoadNextPage ? () =>{
-                    console.log("isLoadNextPage");
-                    return new Promise((res,rej)=>res("noop")) 
-                }: 
+                // isLoadNextPage ? () =>{
+                //     console.log("isLoadNextPage");
+                //     return new Promise((res,rej)=>res("noop")) 
+                // }: 
                 loadNextPage}
-                rowCount={githubClient.TaskCount}
+                rowCount={githubClient.TotalTaskCount}
                 minimumBatchSize={10}
             >
                 {({onRowsRendered, registerChild}) => (
@@ -387,7 +387,7 @@ function TaskList(props : TaskListPropsType) {
                                 <List
                                 ref={registerChild}
                                 onRowsRendered={onRowsRendered}
-                                rowRenderer={render} rowHeight={60} height={height} rowCount={githubClient.TaskCount} width={width}          
+                                rowRenderer={render} rowHeight={60} height={height} rowCount={githubClient.TotalTaskCount} width={width}          
                                 noRowsRenderer={() =><div className="text-center d-flex flex-column justify-content-center h-100"><span>The List is empty.</span></div> }
                                 />)
                             }
