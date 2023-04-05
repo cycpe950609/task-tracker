@@ -24,11 +24,11 @@ taskRoute.post("/select",async (req,res,next)=>{
     if(token == undefined)
         return res.status(401).send("")
 
-    console.log(`query_state : ${_state}`);
     const query_state     = _state   !== undefined ? _state   : QueryState.All;
     const query_contain   = _contain !== undefined ? _contain : "";
     const query_pagesize  = _pagesize!== undefined ? _pagesize : 10;
     const query_order     = _order !== undefined ? _order : QueryOrder.NewerFirst;
+    console.log(`query_state : ${query_state} , query_order : ${query_order}`);
 
     const getQueryLabel = () => {
         switch(query_state){
@@ -181,6 +181,8 @@ taskRoute.post("/create",async (req,res)=>{
             'Content-Type':'application/x-www-form-urlencoded'
         },
     })
+
+    console.log(createOption)
 
     // console.log(rtv)
     

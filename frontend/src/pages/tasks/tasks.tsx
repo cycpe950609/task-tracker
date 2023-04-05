@@ -173,7 +173,7 @@ function NavigateBar(props : NavigateBarPropsType){
     const searchSubmit = (e : FormEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        updateQuery(filterState,IsAsc);
+        updateQuery(filterState,!IsAsc);
     };
 
     const updateOrder = (isAsc: boolean) => {
@@ -382,4 +382,4 @@ function TaskList(props : TaskListPropsType) {
             {(modalType === "editing") && <EditingModal  id={editingID} close={closeModal} task={githubClient.GetTask(editingID)} update={(newValue)=> githubClient.SetTask(editingID,newValue)}></EditingModal>}
         </div>
     );
-  }
+}
